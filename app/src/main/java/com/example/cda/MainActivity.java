@@ -10,6 +10,7 @@ import android.location.Location;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
@@ -64,7 +65,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Marker marker;
     private Location oldLocation;
     private Location newLocation;
-    private double speed, gforce, rotation;
+    private double oldSpeed, speed, gforce, rotation,db;
+    private boolean crash = false;
 
     private SensorManager manager;
     private float timestamp;
@@ -102,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
 
                 if(oldLocation != null) {
+                    oldSpeed = speed;
                     Log.v("Location", "Time: " + oldLocation.getTime() + " " + newLocation.getTime());
                     Log.v("Location", "Distance: " + oldLocation.distanceTo(newLocation));
                     float time = (newLocation.getTime() - oldLocation.getTime()) / 1000;
@@ -111,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         speed = 0;
                     }
                 }
-                speedTxt.setText(String.format("%skm/h", ((int) speed * MS2KMH)));
+                speedTxt.setText(String.format("%skm/h", df.format(((int) (speed * MS2KMH)))));
                 Log.v("Location", "Current speed is " + ((int)speed*MS2KMH) +" km/h");
             }
         }
@@ -126,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 double z = event.values[2];
                 double max_g = Math.sqrt(x*x + y*y + z*z)/(GRAVITY_CONSTANT);
                 gforce = max_g;
-                gTxt.setText("G: " + df.format(max_g));
+                gTxt.setText(df.format(max_g) +"g");
                 Log.v("Accelerometer", "G-Force: " + max_g);
             }
             if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
@@ -143,14 +146,66 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     float degrees = (float) (theta * RAD2D);
                     rotation = degrees;
 
-                    rotationTxt.setText("Rotation: " + df.format(degrees));
+                    rotationTxt.setText(df.format(degrees) + "°");
                     Log.v("Gyroscope", "Rotation: " + degrees);
 
                 }
                 timestamp = event.timestamp;
             }
+
             if(writer!= null){
-                writer.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(speed), String.valueOf(dbTxt.getText())});
+                // TODO implement speed standard deviation to recognise if user is in traffic?
+
+                if(speed>=20) {
+                    Log.i("CDA", "User is in motion: " + speed + "km/h");
+                    if(gforce>=4){
+                        Log.i("CDA", "Device experienced high g-force: " + gforce + "g");
+                        if(oldSpeed > speed){
+                            // TODO How will this work with harsh acceleration?
+                            Log.i("CDA", "Vehicle has slowed down after experiencing high g-force : " + speed + "km/h");
+                            crash = true;
+                            Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                                    "\n Speed: " + speed + "km/h" +
+                                    "\n Rotation: " + rotation + "°" +
+                                    "\n dB: " + db + "dB");
+                        }
+                        if(rotation>=40){
+                            crash= true;
+                            Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                                    "\n Speed: " + speed + "km/h" +
+                                    "\n Rotation: " + rotation + "°" +
+                                    "\n dB: " + db + "dB");
+                        }
+                        if (db>90) {
+                            crash = true;
+                            Log.i("CDA", "Crash occurred and airbag was ejected");
+                            Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                                    "\n Speed: " + speed + "km/h" +
+                                    "\n Rotation: " + rotation + "°" +
+                                    "\n dB: " + db + "dB");
+                        }
+                    }else{
+                        crash = false;
+                    }
+                }else{
+                    Log.i("CDA", "User is stationary");
+                    if(gforce>=4){
+                        if(oldSpeed > speed) {
+                            Log.i("CDA", "Device experienced high g-force while stationary/or moving slow: " + gforce + "g");
+                            crash = true;
+                            Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                                    "\n Speed: " + speed + "km/h" +
+                                    "\n Rotation: " + rotation + "°" +
+                                    "\n dB: " + db + "dB");
+                        }else{
+                            crash = false;
+                        }
+                    }else{
+                        crash = false;
+                    }
+                }
+                writer.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(speed), String.valueOf(db), String.valueOf(crash)});
+
             }
         }
 
@@ -221,8 +276,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-
-                dbTxt.setText(String.valueOf(getDB()));
+                db = getDB();
+                dbTxt.setText((int) db +"dB");
 
                 handler.postDelayed(this, 100);
             }
@@ -310,7 +365,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             } else {
                 writer = new CSVWriter(new FileWriter(filePath));
             }
-            writer.writeNext(new String[]{"Rotation", "G-Force", "Speed"});
+            writer.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash"});
         } catch (IOException e) {
             e.printStackTrace();
         }
