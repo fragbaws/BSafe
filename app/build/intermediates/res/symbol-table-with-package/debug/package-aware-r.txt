@@ -820,14 +820,12 @@ id packed
 id parent
 id parentPanel
 id percent
-id pitchTxt
 id progress_circular
 id progress_horizontal
 id radio
 id right
 id right_icon
 id right_side
-id rollTxt
 id rotationTxt
 id satellite
 id screen

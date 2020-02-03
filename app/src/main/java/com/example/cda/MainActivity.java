@@ -8,13 +8,14 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -38,6 +39,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 
 import static android.os.Environment.getExternalStorageDirectory;
 
@@ -65,11 +67,33 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Marker marker;
     private Location oldLocation;
     private Location newLocation;
-    private double oldSpeed, speed, gforce, rotation,db;
+    private double speed, gforce, rotation,db;
     private boolean crash = false;
 
     private SensorManager manager;
-    private float timestamp;
+    private float  timestamp_gyro;
+    private ArrayList<Double> speedSSD;
+    private double ssd = 0; //speed standard deviation
+    private Handler handlerSSD;
+    private Runnable updateTimerThread = new Runnable() {
+        @RequiresApi(api = Build.VERSION_CODES.N)
+        public void run()
+        {
+            if(speedSSD.size() == 300){ //every 30 seconds
+                ssd = calcSSD(speedSSD);
+                if(ssdWriter != null){
+                    ssdWriter.writeNext(new String[]{String.valueOf(ssd), String.valueOf(System.currentTimeMillis()/1000)});
+                }
+                speedSSD.clear();
+            }else {
+                Log.v("SSD", "Time passed: " + speedSSD.size()*200 + "ms" + " Size: " + speedSSD.size());
+                speedSSD.add(speed);
+            }
+
+            handlerSSD.postDelayed(this, 100);
+        }
+    };
+
     private static final DecimalFormat df = new DecimalFormat("#.###");
 
     private MediaRecorder recorder;
@@ -78,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button btnActivate;
     private TextView rotationTxt, gTxt, speedTxt, dbTxt;
     private CSVWriter writer;
+    private CSVWriter ssdWriter;
 
     private LocationCallback locationCallback = new LocationCallback() {
         @Override
@@ -104,15 +129,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
 
                 if(oldLocation != null) {
-                    oldSpeed = speed;
+                    //oldSpeed = speed;
                     Log.v("Location", "Time: " + oldLocation.getTime() + " " + newLocation.getTime());
                     Log.v("Location", "Distance: " + oldLocation.distanceTo(newLocation));
-                    float time = (newLocation.getTime() - oldLocation.getTime()) / 1000;
-                    float distance = newLocation.distanceTo(oldLocation);
-                    speed = distance / time;
-                    if (speed < 1) {
-                        speed = 0;
-                    }
+                    speed = calcSpeed(oldLocation, newLocation);
                 }
                 speedTxt.setText(String.format("%skm/h", df.format(((int) (speed * MS2KMH)))));
                 Log.v("Location", "Current speed is " + ((int)speed*MS2KMH) +" km/h");
@@ -133,9 +153,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Log.v("Accelerometer", "G-Force: " + max_g);
             }
             if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-                if(timestamp!=0) {
+                if(timestamp_gyro!=0) {
 
-                    final float dT = (event.timestamp - timestamp) * NS2S;
+                    float dT = (event.timestamp - timestamp_gyro) * NS2S;
                     float pitch = event.values[0];
                     float roll = event.values[1];
                     float yaw = event.values[2];
@@ -150,62 +170,37 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.v("Gyroscope", "Rotation: " + degrees);
 
                 }
-                timestamp = event.timestamp;
+                timestamp_gyro = event.timestamp;
             }
 
             if(writer!= null){
+                String triggeredEvent = "";
                 // TODO implement speed standard deviation to recognise if user is in traffic?
-
-                if(speed>=20) {
-                    Log.i("CDA", "User is in motion: " + speed + "km/h");
-                    if(gforce>=4){
-                        Log.i("CDA", "Device experienced high g-force: " + gforce + "g");
-                        if(oldSpeed > speed){
-                            // TODO How will this work with harsh acceleration?
-                            Log.i("CDA", "Vehicle has slowed down after experiencing high g-force : " + speed + "km/h");
-                            crash = true;
-                            Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
-                                    "\n Speed: " + speed + "km/h" +
-                                    "\n Rotation: " + rotation + "°" +
-                                    "\n dB: " + db + "dB");
-                        }
-                        if(rotation>=40){
-                            crash= true;
-                            Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
-                                    "\n Speed: " + speed + "km/h" +
-                                    "\n Rotation: " + rotation + "°" +
-                                    "\n dB: " + db + "dB");
-                        }
-                        if (db>90) {
-                            crash = true;
-                            Log.i("CDA", "Crash occurred and airbag was ejected");
-                            Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
-                                    "\n Speed: " + speed + "km/h" +
-                                    "\n Rotation: " + rotation + "°" +
-                                    "\n dB: " + db + "dB");
-                        }
-                    }else{
-                        crash = false;
-                    }
+                if(((gforce/4) + (db/140)) >= 1 && (speed>=24)){ // travelling and hit
+                    crash= true;
+                    triggeredEvent = "1";
+                    Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                            "\n Speed: " + speed + "km/h" +
+                            "\n Rotation: " + rotation + "°" +
+                            "\n dB: " + db + "dB");
+                }else if(((gforce/4) + (db/140) + (rotation/45)) >= 2) { // hit and vehicle overturned
+                    crash = true;
+                    triggeredEvent = "2";
+                    Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                            "\n Speed: " + speed + "km/h" +
+                            "\n Rotation: " + rotation + "°" +
+                            "\n dB: " + db + "dB");
+                }else if(((gforce/4) + (db/140) + (ssd/2.06) >=2)){ // hit while slowly moving
+                    crash = true;
+                    triggeredEvent = "3";
+                    Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                            "\n Speed: " + speed + "km/h" +
+                            "\n Rotation: " + rotation + "°" +
+                            "\n dB: " + db + "dB");
                 }else{
-                    Log.i("CDA", "User is stationary");
-                    if(gforce>=4){
-                        if(oldSpeed > speed) {
-                            Log.i("CDA", "Device experienced high g-force while stationary/or moving slow: " + gforce + "g");
-                            crash = true;
-                            Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
-                                    "\n Speed: " + speed + "km/h" +
-                                    "\n Rotation: " + rotation + "°" +
-                                    "\n dB: " + db + "dB");
-                        }else{
-                            crash = false;
-                        }
-                    }else{
-                        crash = false;
-                    }
+                    crash = false;
                 }
-                writer.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(speed), String.valueOf(db), String.valueOf(crash)});
-
+                writer.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(speed), String.valueOf(db), String.valueOf(crash), triggeredEvent, String.valueOf(System.currentTimeMillis()/1000)});
             }
         }
 
@@ -239,6 +234,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         dbTxt = findViewById(R.id.dbTxt);
         audioName = getExternalCacheDir().getAbsolutePath() + "/audiorecordtest.3gp";
 
+        speedSSD = new ArrayList<>();
+        handlerSSD = new Handler();
+
         btnActivate.setOnClickListener(v -> {
             if(v.getId() == btnActivate.getId()){
                 SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.cdaMap);
@@ -249,13 +247,33 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.v("Location", "Could not load map fragment");
                 }
                 manager = (SensorManager) getSystemService(SENSOR_SERVICE);
-                manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
-                manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
+                manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), 100000);//SensorManager.SENSOR_DELAY_GAME);
+                manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), 100000);//SensorManager.SENSOR_DELAY_GAME);
                 startRecording();
-
+                handlerSSD.postDelayed(updateTimerThread, 0);
             }
         });
 
+    }
+
+    private float calcSpeed(Location oldLocation, Location newLocation){
+        float time = (newLocation.getTime() - oldLocation.getTime()) / 1000;
+        float distance = newLocation.distanceTo(oldLocation);
+        float speed = distance / time;
+        if (speed < 1) {
+            speed = 0;
+        }
+        return speed;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private double calcSSD(ArrayList<Double> speeds){
+        double mean = speeds.stream().mapToDouble(i -> i).sum()/speeds.size();
+        double sum = 0;
+        for(Double curr: speeds){
+            sum += Math.pow((curr - mean), 2);
+        }
+        return Math.sqrt(sum/speeds.size());
     }
 
     private void startRecording() {
@@ -279,9 +297,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 db = getDB();
                 dbTxt.setText((int) db +"dB");
 
-                handler.postDelayed(this, 100);
+                handler.postDelayed(this, 20);
             }
-        }, 100);
+        }, 20);
     }
 
     private double getDB(){
@@ -323,6 +341,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        handlerSSD.removeCallbacks(updateTimerThread);
         if (fusedLocationProviderClient != null) {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         }
@@ -335,6 +354,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         try {
             if(writer != null) {
                 writer.close();
+            }
+            if(ssdWriter != null){
+                ssdWriter.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -351,21 +373,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         dbTxt.setText("");
 
         String baseDir = getExternalStorageDirectory().getAbsolutePath();
-        String fileName = "data.csv";
+        String fileName = "crash_data.csv";
         String filePath = baseDir + File.separator + fileName;
         Log.v("Storage", "Writing to " + filePath);
         File f = new File(filePath);
         FileWriter mFileWriter;
 
+        String ssdname = "ssd.csv";
+        String ssdPath = baseDir + File.separator + ssdname;
+        Log.v("Storage", "Writing to " + ssdPath);
+        File fssd = new File(ssdPath);
+        FileWriter ssdFileWriter;
+
         // File exist
         try {
+            if(fssd.exists() && !fssd.isDirectory()){
+                ssdFileWriter = new FileWriter(ssdPath, true);
+                ssdWriter = new CSVWriter(ssdFileWriter);
+            }else{
+                ssdWriter = new CSVWriter(new FileWriter(ssdPath));
+            }
+            ssdWriter.writeNext(new String[]{"Standard Deviation", "Timestamp"});
+
             if (f.exists() && !f.isDirectory()) {
-                mFileWriter = new FileWriter(filePath, false);
+                mFileWriter = new FileWriter(filePath, true);
                 writer = new CSVWriter(mFileWriter);
             } else {
                 writer = new CSVWriter(new FileWriter(filePath));
             }
-            writer.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash"});
+            writer.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp"});
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -374,6 +410,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onPause() {
         super.onPause();
+        handlerSSD.removeCallbacks(updateTimerThread);
+
         if (fusedLocationProviderClient != null) {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         }
@@ -386,6 +424,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         try {
             if(writer != null) {
                 writer.close();
+            }
+            if(ssdWriter != null){
+                ssdWriter.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
