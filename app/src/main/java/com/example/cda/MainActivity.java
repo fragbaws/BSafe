@@ -79,17 +79,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         @RequiresApi(api = Build.VERSION_CODES.N)
         public void run()
         {
-            if(speedSSD.size() == 300){ //every 30 seconds
+            if(speedSSD.size() == 150){ //every 15 seconds
                 ssd = calcSSD(speedSSD);
                 if(ssdWriter != null){
                     ssdWriter.writeNext(new String[]{String.valueOf(ssd), String.valueOf(System.currentTimeMillis()/1000)});
                 }
                 speedSSD.clear();
             }else {
-                Log.v("SSD", "Time passed: " + speedSSD.size()*200 + "ms" + " Size: " + speedSSD.size());
+                Log.v("SSD", "Time passed: " + speedSSD.size()*200 + "ms");
+                Log.v("SSD", "Current speed: " + speed);
                 speedSSD.add(speed);
             }
-
             handlerSSD.postDelayed(this, 100);
         }
     };
@@ -175,7 +175,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             if(writer!= null){
                 String triggeredEvent = "";
-                // TODO implement speed standard deviation to recognise if user is in traffic?
                 if(((gforce/4) + (db/140)) >= 1 && (speed>=24)){ // travelling and hit
                     crash= true;
                     triggeredEvent = "1";
