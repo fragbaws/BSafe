@@ -8,14 +8,12 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.media.MediaRecorder;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -38,18 +36,28 @@ import com.opencsv.CSVWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import static android.os.Environment.getExternalStorageDirectory;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
+    private static final DecimalFormat df = new DecimalFormat("#.###");
     public static final double MS2KMH = 3.6;
     public static final int CLOSE_ZOOM = 15;
     public static final float NS2S = 1.0f / 1000000000.0f;
     public static final double RAD2D = 180.0 / Math.PI;
     public static final double GRAVITY_CONSTANT = 9.81;
+    public static final int ACCIDENT_THRESHOLD = 1;
+    public static final int LOW_SPEED_ACCIDENT_THRESHOLD = 3;
+    public static final int G_FORCE_THRESHOLD = 4;
+    public static final double STANDARD_DEVIATION_THRESHOLD = 2.06;
+    public static final int SOUND_PRESSURE_LEVEL_THRESHOLD = 140;
+    public static final int ROTATION_THRESHOLD = 45;
+    public static final int VEHICLE_SPEED_THRESHOLD = 24;
 
     public static final int REQUEST_LOCATION_PERMISSIONS = 1;
     public static final int REQUEST_RECORD_AUDIO_PERMISSION = 2;
@@ -72,36 +80,33 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private SensorManager manager;
     private float  timestamp_gyro;
+
     private ArrayList<Double> speedSSD;
     private double ssd = 0; //speed standard deviation
     private Handler handlerSSD;
-    private Runnable updateTimerThread = new Runnable() {
-        @RequiresApi(api = Build.VERSION_CODES.N)
+    private Runnable threadSSD = new Runnable() {
         public void run()
         {
-            if(speedSSD.size() == 150){ //every 15 seconds
+            if(speedSSD.size() == 1500){ // 30 seconds
                 ssd = calcSSD(speedSSD);
                 if(ssdWriter != null){
-                    ssdWriter.writeNext(new String[]{String.valueOf(ssd), String.valueOf(System.currentTimeMillis()/1000)});
+                    ssdWriter.writeNext(new String[]{String.valueOf(ssd), DateFormat.getDateTimeInstance().format(new Date())});
                 }
                 speedSSD.clear();
             }else {
-                Log.v("SSD", "Time passed: " + speedSSD.size()*200 + "ms");
                 Log.v("SSD", "Current speed: " + speed);
                 speedSSD.add(speed);
             }
-            handlerSSD.postDelayed(this, 100);
+            handlerSSD.postDelayed(this, 20); // set same as location request interval and other hardware sensors
         }
     };
-
-    private static final DecimalFormat df = new DecimalFormat("#.###");
 
     private MediaRecorder recorder;
     private String audioName;
 
     private Button btnActivate;
     private TextView rotationTxt, gTxt, speedTxt, dbTxt;
-    private CSVWriter writer;
+    private CSVWriter sensorWriter;
     private CSVWriter ssdWriter;
 
     private LocationCallback locationCallback = new LocationCallback() {
@@ -173,23 +178,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 timestamp_gyro = event.timestamp;
             }
 
-            if(writer!= null){
+            if(sensorWriter!= null){
                 String triggeredEvent = "";
-                if(((gforce/4) + (db/140)) >= 1 && (speed>=24)){ // travelling and hit
+                if(((gforce/G_FORCE_THRESHOLD) + (db/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (speed>=VEHICLE_SPEED_THRESHOLD)){ // travelling and hit
                     crash= true;
                     triggeredEvent = "1";
                     Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
                             "\n Speed: " + speed + "km/h" +
                             "\n Rotation: " + rotation + "°" +
                             "\n dB: " + db + "dB");
-                }else if(((gforce/4) + (db/140) + (rotation/45)) >= 2) { // hit and vehicle overturned
+                }else if(((gforce/G_FORCE_THRESHOLD) + (db/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (rotation>=ROTATION_THRESHOLD)) { // hit and vehicle overturned (rotation utilises pitch & roll)
                     crash = true;
                     triggeredEvent = "2";
                     Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
                             "\n Speed: " + speed + "km/h" +
                             "\n Rotation: " + rotation + "°" +
                             "\n dB: " + db + "dB");
-                }else if(((gforce/4) + (db/140) + (ssd/2.06) >=2)){ // hit while slowly moving
+                }else if((((gforce/G_FORCE_THRESHOLD) + (db/SOUND_PRESSURE_LEVEL_THRESHOLD) + (ssd/STANDARD_DEVIATION_THRESHOLD)) >= LOW_SPEED_ACCIDENT_THRESHOLD)){ // hit while slowly moving
                     crash = true;
                     triggeredEvent = "3";
                     Log.v("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
@@ -199,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }else{
                     crash = false;
                 }
-                writer.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(speed), String.valueOf(db), String.valueOf(crash), triggeredEvent, String.valueOf(System.currentTimeMillis()/1000)});
+                sensorWriter.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(speed), String.valueOf(db), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date())});
             }
         }
 
@@ -246,10 +251,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Log.v("Location", "Could not load map fragment");
                 }
                 manager = (SensorManager) getSystemService(SENSOR_SERVICE);
-                manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), 100000);//SensorManager.SENSOR_DELAY_GAME);
-                manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), 100000);//SensorManager.SENSOR_DELAY_GAME);
+                manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
+                manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
                 startRecording();
-                handlerSSD.postDelayed(updateTimerThread, 0);
+                handlerSSD.postDelayed(threadSSD, 0);
             }
         });
 
@@ -265,9 +270,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return speed;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     private double calcSSD(ArrayList<Double> speeds){
-        double mean = speeds.stream().mapToDouble(i -> i).sum()/speeds.size();
+        double tmp = 0;
+        for(Double curr: speeds){
+            tmp+=curr;
+        }
+        double mean = tmp/speeds.size();
         double sum = 0;
         for(Double curr: speeds){
             sum += Math.pow((curr - mean), 2);
@@ -340,7 +348,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        handlerSSD.removeCallbacks(updateTimerThread);
+        handlerSSD.removeCallbacks(threadSSD);
+        speedSSD.clear();
         if (fusedLocationProviderClient != null) {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         }
@@ -351,8 +360,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             stopRecording();
         }
         try {
-            if(writer != null) {
-                writer.close();
+            if(sensorWriter != null) {
+                sensorWriter.close();
             }
             if(ssdWriter != null){
                 ssdWriter.close();
@@ -396,11 +405,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             if (f.exists() && !f.isDirectory()) {
                 mFileWriter = new FileWriter(filePath, true);
-                writer = new CSVWriter(mFileWriter);
+                sensorWriter = new CSVWriter(mFileWriter);
             } else {
-                writer = new CSVWriter(new FileWriter(filePath));
+                sensorWriter = new CSVWriter(new FileWriter(filePath));
             }
-            writer.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp"});
+            sensorWriter.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp"});
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -409,8 +418,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onPause() {
         super.onPause();
-        handlerSSD.removeCallbacks(updateTimerThread);
-
+        handlerSSD.removeCallbacks(threadSSD);
+        speedSSD.clear();
         if (fusedLocationProviderClient != null) {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         }
@@ -421,8 +430,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             stopRecording();
         }
         try {
-            if(writer != null) {
-                writer.close();
+            if(sensorWriter != null) {
+                sensorWriter.close();
             }
             if(ssdWriter != null){
                 ssdWriter.close();
@@ -441,8 +450,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void requestLocation() {
         locationRequest = new LocationRequest();
         Log.v("Location", "Requesting location");
-        locationRequest.setInterval(100);
-        locationRequest.setSmallestDisplacement(10);
+        locationRequest.setFastestInterval(20);
+        locationRequest.setSmallestDisplacement(5);
         locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
