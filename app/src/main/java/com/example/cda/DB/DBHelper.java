@@ -99,4 +99,8 @@ public class DBHelper extends SQLiteOpenHelper{
         Cursor c = getReadableDatabase().rawQuery("SELECT * FROM " + USERS_TABLE_NAME + " WHERE " + USERS_COLUMN_EMAIL + "=\""+email+"\" AND " + USERS_COLUMN_PASSWORD + "=\""+password+"\";", null);
         return c.moveToFirst();
     }
+
+    public void removeAll(){
+
+    }
 }

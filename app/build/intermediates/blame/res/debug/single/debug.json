@@ -36,16 +36,16 @@
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\drawable\\abc_btn_colored_material.xml"
     },
     {
-        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-hdpi-v4_abc_list_pressed_holo_light.9.png.flat",
-        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\drawable-hdpi-v4\\abc_list_pressed_holo_light.9.png"
+        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "D:\\University\\Android\\cda\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png"
     },
     {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-mdpi-v4_abc_list_longpressed_holo.9.png.flat",
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\drawable-mdpi-v4\\abc_list_longpressed_holo.9.png"
     },
     {
-        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "D:\\University\\Android\\cda\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png"
+        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-hdpi-v4_abc_list_pressed_holo_light.9.png.flat",
+        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\drawable-hdpi-v4\\abc_list_pressed_holo_light.9.png"
     },
     {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\color_abc_tint_switch_track.xml.flat",
@@ -192,12 +192,12 @@
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\291563c6708268cf4683b088770f2b39\\play-services-base-17.0.0\\res\\drawable\\common_google_signin_btn_icon_disabled.xml"
     },
     {
-        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-ldpi-v4_ic_thumb_up.png.flat",
-        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\6cd3928b2421a9ba624fa0a5227cb7a9\\fit-button-1.2.1\\res\\drawable-ldpi-v4\\ic_thumb_up.png"
-    },
-    {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\color_design_error.xml.flat",
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\cb634fe4b4d1fdfcd5255e485d30a0c1\\material-1.0.0\\res\\color\\design_error.xml"
+    },
+    {
+        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-ldpi-v4_ic_thumb_up.png.flat",
+        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\6cd3928b2421a9ba624fa0a5227cb7a9\\fit-button-1.2.1\\res\\drawable-ldpi-v4\\ic_thumb_up.png"
     },
     {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\color_mtrl_chip_ripple_color.xml.flat",
@@ -220,24 +220,24 @@
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\cb634fe4b4d1fdfcd5255e485d30a0c1\\material-1.0.0\\res\\color\\mtrl_btn_ripple_color.xml"
     },
     {
-        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-hdpi-v4_abc_ic_menu_paste_mtrl_am_alpha.png.flat",
-        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\drawable-hdpi-v4\\abc_ic_menu_paste_mtrl_am_alpha.png"
-    },
-    {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\interpolator-v21_mtrl_linear_out_slow_in.xml.flat",
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\cb634fe4b4d1fdfcd5255e485d30a0c1\\material-1.0.0\\res\\interpolator-v21\\mtrl_linear_out_slow_in.xml"
+    },
+    {
+        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-hdpi-v4_abc_ic_menu_paste_mtrl_am_alpha.png.flat",
+        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\drawable-hdpi-v4\\abc_ic_menu_paste_mtrl_am_alpha.png"
     },
     {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxhdpi-v4_common_google_signin_btn_text_dark_normal_background.9.png.flat",
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\291563c6708268cf4683b088770f2b39\\play-services-base-17.0.0\\res\\drawable-xxhdpi-v4\\common_google_signin_btn_text_dark_normal_background.9.png"
     },
     {
-        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxhdpi-v4_abc_ic_star_black_36dp.png.flat",
-        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\drawable-xxhdpi-v4\\abc_ic_star_black_36dp.png"
-    },
-    {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\layout_abc_cascading_menu_item_layout.xml.flat",
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\layout\\abc_cascading_menu_item_layout.xml"
+    },
+    {
+        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxhdpi-v4_abc_ic_star_black_36dp.png.flat",
+        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\drawable-xxhdpi-v4\\abc_ic_star_black_36dp.png"
     },
     {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\color_mtrl_btn_stroke_color_selector.xml.flat",
@@ -276,12 +276,12 @@
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\291563c6708268cf4683b088770f2b39\\play-services-base-17.0.0\\res\\drawable-xhdpi-v4\\common_google_signin_btn_icon_dark_normal_background.9.png"
     },
     {
-        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\layout_abc_screen_toolbar.xml.flat",
-        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\layout\\abc_screen_toolbar.xml"
-    },
-    {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\layout_mtrl_layout_snackbar.xml.flat",
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\cb634fe4b4d1fdfcd5255e485d30a0c1\\material-1.0.0\\res\\layout\\mtrl_layout_snackbar.xml"
+    },
+    {
+        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\layout_abc_screen_toolbar.xml.flat",
+        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\layout\\abc_screen_toolbar.xml"
     },
     {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-v21_design_password_eye.xml.flat",
@@ -376,12 +376,12 @@
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\6cd3928b2421a9ba624fa0a5227cb7a9\\fit-button-1.2.1\\res\\drawable-xhdpi-v4\\ic_thumb_up.png"
     },
     {
-        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xhdpi-v4_ms__shadow_background.9.png.flat",
-        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\3e4ba551ccaa36f09617206ecc6699c2\\material-spinner-1.3.1\\res\\drawable-xhdpi-v4\\ms__shadow_background.9.png"
-    },
-    {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable_abc_ic_go_search_api_material.xml.flat",
         "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\f6a183f8595ca34f3d5cc99d1f8bc322\\appcompat-1.0.2\\res\\drawable\\abc_ic_go_search_api_material.xml"
+    },
+    {
+        "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xhdpi-v4_ms__shadow_background.9.png.flat",
+        "source": "C:\\Users\\Nikolaj\\.gradle\\caches\\transforms-2\\files-2.1\\3e4ba551ccaa36f09617206ecc6699c2\\material-spinner-1.3.1\\res\\drawable-xhdpi-v4\\ms__shadow_background.9.png"
     },
     {
         "merged": "D:\\University\\Android\\cda\\app\\build\\intermediates\\res\\merged\\debug\\drawable-xxhdpi-v4_ms__shadow_background.9.png.flat",
