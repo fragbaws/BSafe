@@ -5,7 +5,7 @@
 5    android:versionName="1.0" >
 6
 7    <uses-sdk
-8        android:minSdkVersion="15"
+8        android:minSdkVersion="17"
 8-->D:\University\Android\cda\app\src\main\AndroidManifest.xml
 9        android:targetSdkVersion="29" />
 9-->D:\University\Android\cda\app\src\main\AndroidManifest.xml
@@ -14,7 +14,7 @@
 11-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:5:5-81
 11-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:5:22-78
 12    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-12-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:6:5-78
+12-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:6:5-79
 12-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:6:22-76
 13    <uses-permission android:name="android.permission.INTERNET" />
 13-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:7:5-67
@@ -39,7 +39,7 @@
 22-->[com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:28:9-32
 23
 24    <application
-24-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:11:5-27:19
+24-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:11:5-31:19
 25        android:allowBackup="true"
 25-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:12:9-35
 26        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
@@ -56,61 +56,67 @@
 32        android:testOnly="true"
 33        android:theme="@style/AppTheme" >
 33-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:17:9-40
-34        <activity android:name="com.example.cda.MainActivity" >
-34-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:18:9-24:20
-34-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:18:19-47
-35            <intent-filter>
-35-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:19:13-23:29
-36                <action android:name="android.intent.action.MAIN" />
-36-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:20:17-69
-36-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:20:25-66
-37
-38                <category android:name="android.intent.category.LAUNCHER" />
-38-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:22:17-77
-38-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:22:27-74
-39            </intent-filter>
-40        </activity>
-41
-42        <meta-data
-42-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:9-123
-43            android:name="com.google.android.geo.API_KEY"
-43-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:20-65
-44            android:value="AIzaSyDu8TkcH1EPm1gTWY2OKJcMvRGkfQgjwfM" />
-44-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:66-121
-45        <!-- Needs to be explicitly declared on P+ -->
-46        <uses-library
-46-->[com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:33:9-35:40
-47            android:name="org.apache.http.legacy"
-47-->[com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:34:13-50
-48            android:required="false" />
-48-->[com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:35:13-37
-49
-50        <activity
-50-->[com.google.android.gms:play-services-base:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\291563c6708268cf4683b088770f2b39\play-services-base-17.0.0\AndroidManifest.xml:23:9-26:75
-51            android:name="com.google.android.gms.common.api.GoogleApiActivity"
-51-->[com.google.android.gms:play-services-base:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\291563c6708268cf4683b088770f2b39\play-services-base-17.0.0\AndroidManifest.xml:24:13-79
-52            android:exported="false"
-52-->[com.google.android.gms:play-services-base:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\291563c6708268cf4683b088770f2b39\play-services-base-17.0.0\AndroidManifest.xml:25:13-37
-53            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-53-->[com.google.android.gms:play-services-base:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\291563c6708268cf4683b088770f2b39\play-services-base-17.0.0\AndroidManifest.xml:26:13-72
-54
-55        <meta-data
-55-->[com.google.android.gms:play-services-basement:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\9b89f9a3fe7e424f7a5878c899fb3e73\jetified-play-services-basement-17.0.0\AndroidManifest.xml:23:9-25:69
-56            android:name="com.google.android.gms.version"
-56-->[com.google.android.gms:play-services-basement:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\9b89f9a3fe7e424f7a5878c899fb3e73\jetified-play-services-basement-17.0.0\AndroidManifest.xml:24:13-58
-57            android:value="@integer/google_play_services_version" />
-57-->[com.google.android.gms:play-services-basement:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\9b89f9a3fe7e424f7a5878c899fb3e73\jetified-play-services-basement-17.0.0\AndroidManifest.xml:25:13-66
-58
-59        <provider
-59-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:23:9-27:43
-60            android:name="androidx.lifecycle.ProcessLifecycleOwnerInitializer"
-60-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:24:13-79
-61            android:authorities="com.example.cda.lifecycle-process"
-61-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:25:13-69
-62            android:exported="false"
-62-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:26:13-37
-63            android:multiprocess="true" />
-63-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:27:13-40
-64    </application>
-65
-66</manifest>
+34        <activity android:name="com.example.cda.SignupActivity" />
+34-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:18:9-61
+34-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:18:19-49
+35        <activity android:name="com.example.cda.LoginActivity" >
+35-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:19:9-25:20
+35-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:19:19-48
+36            <intent-filter>
+36-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:20:13-24:29
+37                <action android:name="android.intent.action.MAIN" />
+37-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:21:17-69
+37-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:21:25-66
+38
+39                <category android:name="android.intent.category.LAUNCHER" />
+39-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:23:17-77
+39-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:23:27-74
+40            </intent-filter>
+41        </activity>
+42        <activity android:name="com.example.cda.MainActivity" />
+42-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:9-50
+42-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:19-47
+43
+44        <meta-data
+44-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:28:9-30:71
+45            android:name="com.google.android.geo.API_KEY"
+45-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:29:13-58
+46            android:value="AIzaSyDu8TkcH1EPm1gTWY2OKJcMvRGkfQgjwfM" />
+46-->D:\University\Android\cda\app\src\main\AndroidManifest.xml:30:13-68
+47        <!-- Needs to be explicitly declared on P+ -->
+48        <uses-library
+48-->[com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:33:9-35:40
+49            android:name="org.apache.http.legacy"
+49-->[com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:34:13-50
+50            android:required="false" />
+50-->[com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:35:13-37
+51
+52        <activity
+52-->[com.google.android.gms:play-services-base:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\291563c6708268cf4683b088770f2b39\play-services-base-17.0.0\AndroidManifest.xml:23:9-26:75
+53            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+53-->[com.google.android.gms:play-services-base:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\291563c6708268cf4683b088770f2b39\play-services-base-17.0.0\AndroidManifest.xml:24:13-79
+54            android:exported="false"
+54-->[com.google.android.gms:play-services-base:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\291563c6708268cf4683b088770f2b39\play-services-base-17.0.0\AndroidManifest.xml:25:13-37
+55            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+55-->[com.google.android.gms:play-services-base:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\291563c6708268cf4683b088770f2b39\play-services-base-17.0.0\AndroidManifest.xml:26:13-72
+56
+57        <meta-data
+57-->[com.google.android.gms:play-services-basement:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\9b89f9a3fe7e424f7a5878c899fb3e73\jetified-play-services-basement-17.0.0\AndroidManifest.xml:23:9-25:69
+58            android:name="com.google.android.gms.version"
+58-->[com.google.android.gms:play-services-basement:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\9b89f9a3fe7e424f7a5878c899fb3e73\jetified-play-services-basement-17.0.0\AndroidManifest.xml:24:13-58
+59            android:value="@integer/google_play_services_version" />
+59-->[com.google.android.gms:play-services-basement:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\9b89f9a3fe7e424f7a5878c899fb3e73\jetified-play-services-basement-17.0.0\AndroidManifest.xml:25:13-66
+60
+61        <provider
+61-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:23:9-27:43
+62            android:name="androidx.lifecycle.ProcessLifecycleOwnerInitializer"
+62-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:24:13-79
+63            android:authorities="com.example.cda.lifecycle-process"
+63-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:25:13-69
+64            android:exported="false"
+64-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:26:13-37
+65            android:multiprocess="true" />
+65-->[androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bba9e662e9f4bf0da774229f97b853fc\lifecycle-process-2.0.0\AndroidManifest.xml:27:13-40
+66    </application>
+67
+68</manifest>

@@ -3,7 +3,7 @@
     package="com.example.cda.test" >
 
     <uses-sdk
-        android:minSdkVersion="15"
+        android:minSdkVersion="17"
         android:targetSdkVersion="29" />
 
     <instrumentation
