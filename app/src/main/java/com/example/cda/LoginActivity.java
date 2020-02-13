@@ -112,7 +112,7 @@ public class LoginActivity extends AppCompatActivity{
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_SIGNUP) {
             if (resultCode == RESULT_OK) {
-                Toast.makeText(getApplicationContext(), "Registration complete, pleaes login.", Toast.LENGTH_LONG).show();
+                //Toast.makeText(getApplicationContext(), "Registration complete, please login.", Toast.LENGTH_LONG).show();
             }
         }
     }

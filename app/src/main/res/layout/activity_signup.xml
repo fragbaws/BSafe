@@ -20,7 +20,7 @@
             android:id="@+id/logo"
             android:layout_width="wrap_content"
             android:layout_height="200dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="20dp"
             android:src="@drawable/bsafe" />
 
         <com.google.android.material.textfield.TextInputLayout
@@ -31,6 +31,7 @@
                 android:id="@+id/input_firstName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="5dp"
                 android:hint="First name"
                 android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -43,6 +44,7 @@
                 android:id="@+id/input_surname"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="5dp"
                 android:hint="Surname"
                 android:inputType="textPersonName" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -55,8 +57,9 @@
                 android:id="@+id/input_dob"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="5dp"
                 android:ems="10"
-                android:hint="Date of birth (dd/mm/yy)"
+                android:hint="Date of birth (dd/mm/yyyy)"
                 android:inputType="date" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -68,6 +71,7 @@
                 android:id="@+id/input_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="5dp"
                 android:hint="Email"
                 android:inputType="textEmailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -81,6 +85,7 @@
                 android:id="@+id/input_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="5dp"
                 android:hint="Password"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>

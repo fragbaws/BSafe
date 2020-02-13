@@ -40,10 +40,10 @@ public class SignupActivity extends AppCompatActivity {
         sql = new DBHelper(this);
         continueBtn.setOnClickListener(v -> {
 
-            if(!validate()){
-                Toast.makeText(getApplicationContext(), "Check your details are filled correctly.", Toast.LENGTH_LONG).show();
-                return;
-            }
+//            if(!validate()){
+//                Toast.makeText(getApplicationContext(), "Check your details are filled correctly.", Toast.LENGTH_LONG).show();
+//                return;
+//            }
 
             User newUser = new User();
             newUser.setFirstName(firstNameText.getText().toString());
@@ -80,10 +80,4 @@ public class SignupActivity extends AppCompatActivity {
         return valid;
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        setResult(RESULT_OK);
-        finish();
-    }
 }

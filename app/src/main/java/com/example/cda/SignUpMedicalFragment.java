@@ -61,10 +61,10 @@ public class SignUpMedicalFragment extends Fragment {
 
         signupBtn = root.findViewById(R.id.signupBtn);
         signupBtn.setOnClickListener(v -> {
-            if(!validate()){
-                Toast.makeText(getContext(),"Check your details before finishing registration", Toast.LENGTH_LONG).show();
-                return;
-            }
+//            if(!validate()){
+//                Toast.makeText(getContext(),"Check your details before finishing registration", Toast.LENGTH_LONG).show();
+//                return;
+//            }
 
             newUser.setWeight(weightText.getText().toString());
             newUser.setHeight(heightText.getText().toString());
@@ -83,6 +83,7 @@ public class SignUpMedicalFragment extends Fragment {
             new android.os.Handler().postDelayed(
                     () -> {
                         SignupActivity.sql.insertUser(newUser);
+                        Toast.makeText(getContext(), "Registration complete, please login.", Toast.LENGTH_LONG).show();
                         getActivity().setResult(Activity.RESULT_OK);
                         getActivity().finish();
                         progressDialog.dismiss();
