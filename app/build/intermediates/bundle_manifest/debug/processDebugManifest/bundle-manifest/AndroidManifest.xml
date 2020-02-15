@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <!-- Include required permissions for Google Maps API to run. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -41,14 +43,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.example.cda.SignupActivity" />
-        <activity android:name="com.example.cda.LoginActivity" >
+        <activity android:name="com.example.cda.entry.SignupActivity" />
+        <activity android:name="com.example.cda.entry.LoginActivity" >
         </activity>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDu8TkcH1EPm1gTWY2OKJcMvRGkfQgjwfM" />
-        <!-- Needs to be explicitly declared on P+ -->
+
+        <activity
+            android:name="androidx.biometric.DeviceCredentialHandlerActivity"
+            android:exported="true"
+            android:theme="@style/DeviceCredentialHandlerTheme" /> <!-- Needs to be explicitly declared on P+ -->
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false" />
