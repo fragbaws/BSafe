@@ -32,15 +32,19 @@
         android:supportsRtl="true"
         android:testOnly="true"
         android:theme="@style/AppTheme" >
-        <activity android:name="com.example.cda.SignupActivity" />
-        <activity android:name="com.example.cda.LoginActivity" >
+        <activity
+            android:name="com.example.cda.MainActivity"
+            android:label="@string/title_activity_main_screen"
+            android:theme="@style/AppTheme.NoActionBar" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.example.cda.MainActivity" />
+        <activity android:name="com.example.cda.SignupActivity" />
+        <activity android:name="com.example.cda.LoginActivity" >
+        </activity>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

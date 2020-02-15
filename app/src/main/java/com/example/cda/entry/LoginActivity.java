@@ -1,21 +1,16 @@
-package com.example.cda;
+package com.example.cda.entry;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.FragmentManager;
 
-import android.app.Activity;
-import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.view.Window;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.cda.MainActivity;
+import com.example.cda.R;
 import com.github.nikartm.button.FitButton;
 
 public class LoginActivity extends AppCompatActivity{

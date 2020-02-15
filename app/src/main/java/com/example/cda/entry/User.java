@@ -1,4 +1,4 @@
-package com.example.cda;
+package com.example.cda.entry;
 
 public class User{
 

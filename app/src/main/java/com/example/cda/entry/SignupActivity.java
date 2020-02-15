@@ -1,16 +1,13 @@
-package com.example.cda;
+package com.example.cda.entry;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.cda.DB.DBHelper;
+import com.example.cda.R;
 import com.github.nikartm.button.FitButton;
 
 public class SignupActivity extends AppCompatActivity {
