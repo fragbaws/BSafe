@@ -3,6 +3,9 @@ package com.example.cda;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -18,6 +21,7 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.example.cda.entry.User;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.concurrent.Executor;
@@ -25,14 +29,20 @@ import java.util.concurrent.Executor;
 public class MainActivity extends AppCompatActivity {
 
     BiometricManager biometricManager;
-    boolean biometric_available = false;
-    boolean biometric_succeeded = false;
+    boolean biometricAvailable = false;
+    boolean biometricSucceeded = false;
     private Executor executor;
     private BiometricPrompt biometricPrompt;
     private BiometricPrompt.PromptInfo promptInfo;
 
     private MenuItem selectedItem;
     private AppBarConfiguration mAppBarConfiguration;
+
+    private ImageView headerAvatar;
+    private TextView headerName;
+    private TextView headerEmail;
+
+    private User user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,20 +61,28 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
+        View headerView = navigationView.getHeaderView(0);
+        user = (User) getIntent().getExtras().getSerializable("user");
+        headerName = headerView.findViewById(R.id.nav_header_name);
+        headerEmail = headerView.findViewById(R.id.nav_header_email);
+        headerAvatar = headerView.findViewById(R.id.nav_header_pic);
+        headerName.setText(user.getFirstName() + " " + user.getSurname());
+        headerEmail.setText(user.getEmail());
+
         executor = ContextCompat.getMainExecutor(this);
         biometricPrompt = new BiometricPrompt(MainActivity.this, executor, new BiometricPrompt.AuthenticationCallback() {
             @Override
             public void onAuthenticationError(int errorCode,
                                               @NonNull CharSequence errString) {
                 super.onAuthenticationError(errorCode, errString);
-                biometric_succeeded = false;
+                biometricSucceeded = false;
             }
 
             @Override
             public void onAuthenticationSucceeded(
                     @NonNull BiometricPrompt.AuthenticationResult result) {
                 super.onAuthenticationSucceeded(result);
-                biometric_succeeded = true;
+                biometricSucceeded = true;
                 NavigationUI.onNavDestinationSelected(selectedItem, navController);
                 drawer.closeDrawer(GravityCompat.START);
             }
@@ -72,13 +90,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onAuthenticationFailed() {
                 super.onAuthenticationFailed();
-                biometric_succeeded = false;
+                biometricSucceeded = false;
             }
         });
 
         promptInfo = new BiometricPrompt.PromptInfo.Builder()
                 .setTitle("Biometric Authentication")
-
                 .setSubtitle("Access your profile using biometric credentials")
                 .setNegativeButtonText("Cancel")
                 .build();
@@ -89,9 +106,9 @@ public class MainActivity extends AppCompatActivity {
 
             if(R.id.nav_profile == id && !navigationView.getMenu().findItem(R.id.nav_profile).isChecked()) {
                 selectedItem = menuItem;
-                if (biometric_available) {
+                if (biometricAvailable) {
                     biometricPrompt.authenticate(promptInfo);
-                    return biometric_succeeded;
+                    return biometricSucceeded;
                 }
             }
 
@@ -105,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         switch (biometricManager.canAuthenticate()) {
             case BiometricManager.BIOMETRIC_SUCCESS:
                 Log.d("Biometric", "App can authenticate using biometrics.");
-                biometric_available = true;
+                biometricAvailable = true;
                 break;
             case BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE:
                 Log.e("Biometric", "No biometric features available on this device.");

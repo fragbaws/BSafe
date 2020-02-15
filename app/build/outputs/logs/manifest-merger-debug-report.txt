@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-38:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-38:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-38:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-38:12
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
 MERGED from [com.github.nikartm:fit-button:1.2.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\6cd3928b2421a9ba624fa0a5227cb7a9\fit-button-1.2.1\AndroidManifest.xml:2:1-11:12
 MERGED from [androidx.navigation:navigation-ui:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\4a35834ee991c5e020532b48db5e5899\jetified-navigation-ui-2.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [com.google.android.material:material:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\cb634fe4b4d1fdfcd5255e485d30a0c1\material-1.0.0\AndroidManifest.xml:17:1-24:12
@@ -56,20 +56,20 @@ MERGED from [androidx.lifecycle:lifecycle-service:2.0.0] C:\Users\Nikolaj\.gradl
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.1.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\0554424e228349ffc3db0700d1324aa1\lifecycle-runtime-2.1.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.1.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bad233a64070d55cab9a83b26afbf154\lifecycle-viewmodel-2.1.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.savedstate:savedstate:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\7acef2a7bfef3795312317efec15d83e\savedstate-1.0.0\AndroidManifest.xml:17:1-24:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-38:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-38:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-38:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
 	package
 		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:3:5-30
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
 	android:versionName
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-38:12
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
 	android:versionCode
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-38:12
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
 	xmlns:android
 		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:11-69
@@ -108,7 +108,7 @@ MERGED from [androidx.biometric:biometric:1.0.1] C:\Users\Nikolaj\.gradle\caches
 	android:name
 		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:11:22-71
 application
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:13:5-36:19
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:13:5-37:19
 MERGED from [com.google.android.material:material:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\cb634fe4b4d1fdfcd5255e485d30a0c1\material-1.0.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\cb634fe4b4d1fdfcd5255e485d30a0c1\material-1.0.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.biometric:biometric:1.0.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\49dbb50ae2b3f91d763de38bb7976978\biometric-1.0.1\AndroidManifest.xml:27:5-32:19
@@ -150,37 +150,37 @@ MERGED from [androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradl
 	android:theme
 		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:19:9-40
 activity#com.example.cda.MainActivity
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:20:9-29:20
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:20:9-24:20
 	android:label
 		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:22:13-63
 	android:theme
 		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:23:13-56
 	android:name
 		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:21:13-41
-intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:24:13-28:29
-action#android.intent.action.MAIN
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:25:17-69
-	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:25:25-66
-category#android.intent.category.LAUNCHER
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:27:17-77
-	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:27:27-74
 activity#com.example.cda.entry.SignupActivity
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:30:9-58
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:25:9-58
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:30:19-55
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:25:19-55
 activity#com.example.cda.entry.LoginActivity
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:31:9-67
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:9-32:20
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:31:19-54
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:19-54
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:27:13-31:29
+action#android.intent.action.MAIN
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:28:17-69
+	android:name
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:28:25-66
+category#android.intent.category.LAUNCHER
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:30:17-77
+	android:name
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:30:27-74
 meta-data#com.google.android.geo.API_KEY
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:33:9-35:71
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:34:9-36:71
 	android:value
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:35:13-68
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:36:13-68
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:34:13-58
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:35:13-58
 uses-sdk
 INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml

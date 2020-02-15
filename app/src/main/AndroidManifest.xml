@@ -21,14 +21,15 @@
             android:name=".MainActivity"
             android:label="@string/title_activity_main_screen"
             android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+        <activity android:name=".entry.SignupActivity" />
+        <activity android:name=".entry.LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".entry.SignupActivity" />
-        <activity android:name=".entry.LoginActivity"> </activity>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

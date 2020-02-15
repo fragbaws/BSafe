@@ -5,6 +5,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Bundle;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.example.cda.DB.DBHelper;
 import com.example.cda.R;
@@ -12,7 +13,6 @@ import com.github.nikartm.button.FitButton;
 
 public class SignupActivity extends AppCompatActivity {
 
-    public static DBHelper sql;
 
     private EditText firstNameText;
     private EditText surnameText;
@@ -34,13 +34,12 @@ public class SignupActivity extends AppCompatActivity {
         passwordText = findViewById(R.id.input_password);
         continueBtn = findViewById(R.id.continueBtn);
 
-        sql = new DBHelper(this);
         continueBtn.setOnClickListener(v -> {
 
-//            if(!validate()){
-//                Toast.makeText(getApplicationContext(), "Check your details are filled correctly.", Toast.LENGTH_LONG).show();
-//                return;
-//            }
+            if(!validate()){
+               Toast.makeText(getApplicationContext(), "Check your details are filled correctly.", Toast.LENGTH_LONG).show();
+               return;
+           }
 
             User newUser = new User();
             newUser.setFirstName(firstNameText.getText().toString());

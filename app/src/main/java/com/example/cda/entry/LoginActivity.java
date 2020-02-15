@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.cda.DB.DBHelper;
 import com.example.cda.MainActivity;
 import com.example.cda.R;
 import com.github.nikartm.button.FitButton;
@@ -16,6 +17,7 @@ import com.github.nikartm.button.FitButton;
 public class LoginActivity extends AppCompatActivity{
 
     private static final int REQUEST_SIGNUP = 0;
+    public static DBHelper sql;
 
     private EditText emailText;
     private EditText passwordText;
@@ -27,6 +29,8 @@ public class LoginActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         getSupportActionBar().hide();
         setContentView(R.layout.activity_login);
+
+        sql = new DBHelper(this);
 
         this.emailText = findViewById(R.id.input_email);
         this.passwordText = findViewById(R.id.input_password);
@@ -59,16 +63,12 @@ public class LoginActivity extends AppCompatActivity{
 
         new android.os.Handler().postDelayed(
                 () -> {
-                   /* if(SignupActivity.sql.valid(email, password)){
+                    if(sql.valid(email, password)){
                         onLoginSuccess();
                     }else{
                         onLoginFailed();
-                    }*/
-                    if(email.equals("root@root.com") && password.equals("123")) {
-                        onLoginSuccess();
-                    }else {
-                        onLoginFailed();
                     }
+
                     progressDialog.dismiss();
                 }, 3000);
     }
@@ -93,7 +93,11 @@ public class LoginActivity extends AppCompatActivity{
     }
 
     private void onLoginSuccess() {
-        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        Bundle b = new Bundle();
+        User user = sql.getUser(emailText.getText().toString());
+        b.putSerializable("user", user);
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtras(b);
         startActivity(intent);
         finish();
     }
@@ -105,9 +109,10 @@ public class LoginActivity extends AppCompatActivity{
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_SIGNUP) {
             if (resultCode == RESULT_OK) {
-                //Toast.makeText(getApplicationContext(), "Registration complete, please login.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Registration complete, please login.", Toast.LENGTH_LONG).show();
             }
         }
     }
