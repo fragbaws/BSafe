@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -31,7 +32,7 @@ public class SignUpMedicalFragment extends Fragment {
     private MaterialSpinner smoker;
     private MaterialSpinner bibulous;
     private MaterialSpinner condition;
-    private FitButton signupBtn;
+    private Button signupBtn;
 
     public static SignUpMedicalFragment newInstance() {
         return new SignUpMedicalFragment();
@@ -58,7 +59,7 @@ public class SignUpMedicalFragment extends Fragment {
         condition = root.findViewById(R.id.input_condition);
         condition.setItems("Arthritis", "Hypertension", "Asthma", "Blindness", "Cancer", "Coronary Heart Disease", "Dementia", "Diabetes", "Epilepsy", "Multiple Sclerosis", "Osteoporosis", "None");
 
-        signupBtn = root.findViewById(R.id.signupBtn);
+        signupBtn = root.findViewById(R.id.signup_button);
         signupBtn.setOnClickListener(v -> {
             if(!validate()){
                 Toast.makeText(getContext(),"Check your details before finishing registration", Toast.LENGTH_LONG).show();

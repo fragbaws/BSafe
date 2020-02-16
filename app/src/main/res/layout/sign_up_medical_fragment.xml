@@ -19,9 +19,9 @@
             android:id="@+id/logo"
             android:layout_width="wrap_content"
             android:layout_height="200dp"
-            android:layout_marginTop="96dp"
+            android:layout_marginTop="48dp"
             android:layout_marginLeft="10dp"
-            android:layout_marginBottom="96dp"
+            android:layout_marginBottom="48dp"
             android:src="@drawable/bsafe" />
 
         <LinearLayout
@@ -101,19 +101,17 @@
             app:ms_hint="Select medical condition"
             />
 
-        <com.github.nikartm.button.FitButton
-            android:id="@+id/signupBtn"
+        <Button
+            android:id="@+id/signup_button"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_margin="16dp"
             android:gravity="center"
-            app:fb_cornerRadius="24dp"
-            app:fb_shape="rectangle"
-            app:fb_rippleColor="#DCEDC8"
-            app:fb_textSize="18dp"
-            app:fb_textColor="#F5F5F5"
-            app:fb_text="Create Account"
-            app:fb_backgroundColor="#ffb400"/>
+            android:text="Create Account"
+            android:textSize="18sp"
+            android:textColor="@color/white"
+            android:background="@drawable/rounder_button"
+            android:inputType="text"/>
 
     </LinearLayout>
 

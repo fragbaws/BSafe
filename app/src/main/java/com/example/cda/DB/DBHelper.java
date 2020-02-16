@@ -16,6 +16,8 @@ public class DBHelper extends SQLiteOpenHelper{
     private static final String USERS_COLUMN_FIRST_NAME = "FIRST_NAME";
     private static final String USERS_COLUMN_SURNAME = "SURNAME";
     private static final String USERS_COLUMN_DATE_OF_BIRTH = "DOB";
+    private static final String USERS_COLUMN_MOBILE_NUMBER = "MOBILE_NUMBER";
+    private static final String USERS_COLUMN_EMERGENCY_CONTACT = "EMERGENCY_CONTACT";
     private static final String USERS_COLUMN_EMAIL = "EMAIL";
     private static final String USERS_COLUMN_PASSWORD = "PASSWORD";
     private static final String USERS_COLUMN_HEIGHT = "HEIGHT";
@@ -37,6 +39,8 @@ public class DBHelper extends SQLiteOpenHelper{
                         USERS_COLUMN_FIRST_NAME + " TEXT, " +
                         USERS_COLUMN_SURNAME + " TEXT, " +
                         USERS_COLUMN_DATE_OF_BIRTH + " TEXT, " +
+                        USERS_COLUMN_MOBILE_NUMBER + " TEXT, " +
+                        USERS_COLUMN_EMERGENCY_CONTACT + " TEXT, " +
                         USERS_COLUMN_PASSWORD + " TEXT, " +
                         USERS_COLUMN_WEIGHT + " TEXT, " +
                         USERS_COLUMN_HEIGHT + " TEXT, " +
@@ -62,6 +66,8 @@ public class DBHelper extends SQLiteOpenHelper{
         cv.put(USERS_COLUMN_FIRST_NAME, user.getFirstName());
         cv.put(USERS_COLUMN_SURNAME, user.getSurname());
         cv.put(USERS_COLUMN_DATE_OF_BIRTH, user.getDob());
+        cv.put(USERS_COLUMN_MOBILE_NUMBER, user.getMobile());
+        cv.put(USERS_COLUMN_EMERGENCY_CONTACT, user.getEmergency());
         cv.put(USERS_COLUMN_PASSWORD, user.getPassword());
         cv.put(USERS_COLUMN_WEIGHT, user.getWeight());
         cv.put(USERS_COLUMN_HEIGHT, user.getHeight());
@@ -84,6 +90,8 @@ public class DBHelper extends SQLiteOpenHelper{
             user.setFirstName(c.getString(c.getColumnIndex(USERS_COLUMN_FIRST_NAME)));
             user.setSurname(c.getString(c.getColumnIndex(USERS_COLUMN_SURNAME)));
             user.setDob(c.getString(c.getColumnIndex(USERS_COLUMN_DATE_OF_BIRTH)));
+            user.setMobile(c.getString(c.getColumnIndex(USERS_COLUMN_MOBILE_NUMBER)));
+            user.setEmergency(c.getString(c.getColumnIndex(USERS_COLUMN_EMERGENCY_CONTACT)));
             user.setPassword(c.getString(c.getColumnIndex(USERS_COLUMN_PASSWORD)));
             user.setWeight(c.getString(c.getColumnIndex(USERS_COLUMN_WEIGHT)));
             user.setHeight(c.getString(c.getColumnIndex(USERS_COLUMN_HEIGHT)));

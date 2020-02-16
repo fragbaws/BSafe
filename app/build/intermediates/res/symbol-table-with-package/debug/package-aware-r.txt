@@ -1174,6 +1174,7 @@ drawable btn_radio_off_mtrl
 drawable btn_radio_off_to_on_mtrl_animation
 drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
+drawable car_top_view
 drawable common_full_open_on_phone
 drawable common_google_signin_btn_icon_dark
 drawable common_google_signin_btn_icon_dark_focused
@@ -1203,14 +1204,15 @@ drawable fingerprint_dialog_error_to_fp
 drawable fingerprint_dialog_fp_to_error
 drawable googleg_disabled_color_18
 drawable googleg_standard_color_18
+drawable ic_alert
 drawable ic_launcher_background
 drawable ic_launcher_foreground
+drawable ic_logout
 drawable ic_menu_home
 drawable ic_menu_profile
 drawable ic_mtrl_chip_checked_black
 drawable ic_mtrl_chip_checked_circle
 drawable ic_mtrl_chip_close_circle
-drawable ic_power_button
 drawable ic_thumb_up
 drawable ms__arrow
 drawable ms__drawable
@@ -1234,6 +1236,8 @@ drawable notification_template_icon_low_bg
 drawable notification_tile_bg
 drawable notify_panel_notification_icon_bg
 drawable profile_pic
+drawable round_button
+drawable rounder_button
 drawable side_nav_bar
 drawable tooltip_frame_dark
 drawable tooltip_frame_light
@@ -1326,7 +1330,7 @@ id collapseActionView
 id container
 id content
 id contentPanel
-id continueBtn
+id continue_button
 id coordinator
 id custom
 id customPanel
@@ -1382,8 +1386,10 @@ id input_bloodtype
 id input_condition
 id input_dob
 id input_email
+id input_emergency_contact
 id input_firstName
 id input_height
+id input_mobile_number
 id input_password
 id input_smoker
 id input_surname
@@ -1399,7 +1405,7 @@ id line1
 id line3
 id listMode
 id list_item
-id login
+id login_button
 id logo
 id map
 id masked
@@ -1409,6 +1415,7 @@ id message
 id middle
 id mini
 id mobile_navigation
+id monitor_button
 id mtrl_child_content_container
 id mtrl_internal_children_alpha_tag
 id multiply
@@ -1418,7 +1425,9 @@ id nav_header_name
 id nav_header_pic
 id nav_home
 id nav_host_fragment
+id nav_previous_alerts
 id nav_profile
+id nav_sign_out
 id nav_view
 id navigation_header_container
 id never
@@ -1438,7 +1447,6 @@ id parentPanel
 id parent_matrix
 id percent
 id pin
-id power_button
 id progress_circular
 id progress_horizontal
 id radio
@@ -1472,7 +1480,7 @@ id shortcut
 id showCustom
 id showHome
 id showTitle
-id signupBtn
+id signup_button
 id smallLabel
 id snackbar_action
 id snackbar_text
@@ -1490,6 +1498,7 @@ id src_over
 id standard
 id start
 id status_bar_latest_event_content
+id status_text
 id stretch
 id submenuarrow
 id submit_area
@@ -1616,6 +1625,7 @@ layout design_text_input_password_icon
 layout device_credential_handler_activity
 layout fingerprint_dialog_layout
 layout fragment_home
+layout fragment_previous_alerts
 layout fragment_profile
 layout ms__list_item
 layout mtrl_layout_snackbar
@@ -1712,9 +1722,10 @@ string fingerprint_not_recognized
 string generic_error_user_canceled
 string hello_blank_fragment
 string hide_bottom_view_on_scroll_behavior
-string map_json_style
 string menu_home
+string menu_previous_alerts
 string menu_profile
+string menu_sign_out
 string mtrl_chip_close_icon_content_description
 string nav_app_bar_navigate_up_description
 string nav_app_bar_open_drawer_description
@@ -1733,6 +1744,7 @@ string status_bar_notification_info_overflow
 string title_activity_main_screen
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light
+style AlertStyle
 style Animation_AppCompat_Dialog
 style Animation_AppCompat_DropDownUp
 style Animation_AppCompat_Tooltip

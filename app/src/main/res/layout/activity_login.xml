@@ -49,19 +49,17 @@
         </com.google.android.material.textfield.TextInputLayout>
 
 
-        <com.github.nikartm.button.FitButton
-            android:id="@+id/login"
+        <Button
+            android:id="@+id/login_button"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_margin="16dp"
             android:gravity="center"
-            app:fb_cornerRadius="24dp"
-            app:fb_shape="rectangle"
-            app:fb_rippleColor="#DCEDC8"
-            app:fb_textSize="18dp"
-            app:fb_textColor="#F5F5F5"
-            app:fb_text="Log in"
-            app:fb_backgroundColor="#ffb400"/>
+            android:text="Login"
+            android:textSize="18sp"
+            android:textColor="@color/white"
+            android:background="@drawable/rounder_button"
+            android:inputType="text"/>
 
         <TextView android:id="@+id/beginSignUp"
             android:layout_width="fill_parent"

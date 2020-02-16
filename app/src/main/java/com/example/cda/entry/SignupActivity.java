@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -17,9 +18,12 @@ public class SignupActivity extends AppCompatActivity {
     private EditText firstNameText;
     private EditText surnameText;
     private EditText birthText;
+    private EditText emergencyText;
+    private EditText mobileText;
     private EditText emailText;
     private EditText passwordText;
-    private FitButton continueBtn;
+
+    private Button continueBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,12 +34,13 @@ public class SignupActivity extends AppCompatActivity {
         firstNameText = findViewById(R.id.input_firstName);
         surnameText = findViewById(R.id.input_surname);
         birthText = findViewById(R.id.input_dob);
+        emergencyText = findViewById(R.id.input_emergency_contact);
+        mobileText = findViewById(R.id.input_mobile_number);
         emailText = findViewById(R.id.input_email);
         passwordText = findViewById(R.id.input_password);
-        continueBtn = findViewById(R.id.continueBtn);
+        continueBtn = findViewById(R.id.continue_button);
 
         continueBtn.setOnClickListener(v -> {
-
             if(!validate()){
                Toast.makeText(getApplicationContext(), "Check your details are filled correctly.", Toast.LENGTH_LONG).show();
                return;
@@ -45,6 +50,8 @@ public class SignupActivity extends AppCompatActivity {
             newUser.setFirstName(firstNameText.getText().toString());
             newUser.setSurname(surnameText.getText().toString());
             newUser.setDob(birthText.getText().toString());
+            newUser.setMobile(mobileText.getText().toString());
+            newUser.setEmergency(emergencyText.getText().toString());
             newUser.setEmail(emailText.getText().toString());
             newUser.setPassword(passwordText.getText().toString());
 
@@ -63,10 +70,12 @@ public class SignupActivity extends AppCompatActivity {
         String firstName = firstNameText.getText().toString();
         String surname = surnameText.getText().toString();
         String dob = birthText.getText().toString();
+        String mobile = mobileText.getText().toString();
+        String emergency = emergencyText.getText().toString();
         String email = emailText.getText().toString();
         String password = passwordText.getText().toString();
 
-        if(firstName.isEmpty() || surname.isEmpty() || dob.isEmpty() || password.isEmpty()){
+        if(firstName.isEmpty() || surname.isEmpty() || dob.isEmpty() || password.isEmpty() || emergency.isEmpty() || mobile.isEmpty()){
             valid = false;
         }
         if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {

@@ -12,6 +12,14 @@
             android:id="@+id/nav_profile"
             android:icon="@drawable/ic_menu_profile"
             android:title="@string/menu_profile" />
+        <item
+            android:id="@+id/nav_previous_alerts"
+            android:icon="@drawable/ic_alert"
+            android:title="@string/menu_previous_alerts" />
+        <item
+            android:id="@+id/nav_sign_out"
+            android:icon="@drawable/ic_logout"
+            android:title="@string/menu_sign_out" />
     </group>
 
 

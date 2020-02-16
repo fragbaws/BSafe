@@ -17,5 +17,10 @@
         android:name="com.example.cda.ui.profile.ProfileFragment"
         android:label="@string/menu_profile"
         tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/nav_previous_alerts"
+        android:name="com.example.cda.ui.previous_alerts.PreviousAlerts"
+        android:label="@string/menu_previous_alerts"
+        tools:layout="@layout/fragment_previous_alerts" />
 
 </navigation>

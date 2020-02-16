@@ -14,6 +14,11 @@
         <item name="colorAccent">#ffb400</item>
     </style>
 
+    <style name="AlertStyle" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:background">#ffb400</item>
+    </style>
+
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

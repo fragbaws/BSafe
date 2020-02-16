@@ -9,6 +9,8 @@ public class User implements Serializable {
     private String firstName;
     private String surname;
     private String dob;
+    private String mobile;
+    private String emergency;
     private String email;
     private String password;
     private String height;
@@ -102,9 +104,17 @@ public class User implements Serializable {
         return medicalCondition;
     }
 
-    public void setMedicalCondition(String medicalCondition) {
-        this.medicalCondition = medicalCondition;
-    }
+    public void setMedicalCondition(String medicalCondition) { this.medicalCondition = medicalCondition; }
+
+    public String getEmergency() { return emergency; }
+
+    public void setEmergency(String emergency) { this.emergency = emergency; }
+
+    public String getMobile() { return mobile; }
+
+    public void setMobile(String mobile) { this.mobile = mobile; }
+
+
 
     @Override
     public String toString() {
@@ -112,6 +122,8 @@ public class User implements Serializable {
                 "firstName='" + firstName + '\'' +
                 ", surname='" + surname + '\'' +
                 ", dob='" + dob + '\'' +
+                ", mobile='" + mobile + '\'' +
+                ", emergency='" + emergency + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
                 ", height='" + height + '\'' +

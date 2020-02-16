@@ -1,12 +1,12 @@
 package com.example.cda;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,6 +21,7 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.example.cda.entry.LoginActivity;
 import com.example.cda.entry.User;
 import com.google.android.material.navigation.NavigationView;
 
@@ -38,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
     private MenuItem selectedItem;
     private AppBarConfiguration mAppBarConfiguration;
 
-    private ImageView headerAvatar;
     private TextView headerName;
     private TextView headerEmail;
 
@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_profile)
+                R.id.nav_home, R.id.nav_profile, R.id.nav_previous_alerts)
                 .setDrawerLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
@@ -65,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
         user = (User) getIntent().getExtras().getSerializable("user");
         headerName = headerView.findViewById(R.id.nav_header_name);
         headerEmail = headerView.findViewById(R.id.nav_header_email);
-        headerAvatar = headerView.findViewById(R.id.nav_header_pic);
         headerName.setText(user.getFirstName() + " " + user.getSurname());
         headerEmail.setText(user.getEmail());
 
@@ -112,6 +111,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+            if(R.id.nav_sign_out == id){
+                Intent intent = new Intent(this, LoginActivity.class);
+                startActivity(intent);
+                finish();
+                return false;
+            }
+
             NavigationUI.onNavDestinationSelected(menuItem, navController);
             drawer.closeDrawer(GravityCompat.START);
             return true;
@@ -142,5 +148,9 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    public User getUser(){
+        return this.user;
     }
 }

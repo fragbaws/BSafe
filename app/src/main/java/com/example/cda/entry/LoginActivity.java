@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,7 +22,7 @@ public class LoginActivity extends AppCompatActivity{
 
     private EditText emailText;
     private EditText passwordText;
-    private FitButton loginBtn;
+    private Button loginBtn;
     private TextView signUpText;
 
     @Override
@@ -34,7 +35,7 @@ public class LoginActivity extends AppCompatActivity{
 
         this.emailText = findViewById(R.id.input_email);
         this.passwordText = findViewById(R.id.input_password);
-        this.loginBtn = findViewById(R.id.login);
+        this.loginBtn = findViewById(R.id.login_button);
         this.signUpText = findViewById(R.id.beginSignUp);
 
         loginBtn.setOnClickListener(v -> login());

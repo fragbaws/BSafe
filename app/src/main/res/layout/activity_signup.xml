@@ -20,9 +20,9 @@
             android:id="@+id/logo"
             android:layout_width="wrap_content"
             android:layout_height="200dp"
-            android:layout_marginTop="96dp"
+            android:layout_marginTop="48dp"
             android:layout_marginLeft="10dp"
-            android:layout_marginBottom="96dp"
+            android:layout_marginBottom="48dp"
             android:src="@drawable/bsafe" />
 
         <com.google.android.material.textfield.TextInputLayout
@@ -70,6 +70,34 @@
             android:layout_height="match_parent">
 
             <EditText
+                android:id="@+id/input_mobile_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:ems="10"
+                android:hint="Mobile number"
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <EditText
+                android:id="@+id/input_emergency_contact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:ems="10"
+                android:hint="Emergency Contact"
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <EditText
                 android:id="@+id/input_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -92,19 +120,17 @@
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <com.github.nikartm.button.FitButton
-            android:id="@+id/continueBtn"
+        <Button
+            android:id="@+id/continue_button"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_margin="16dp"
             android:gravity="center"
-            app:fb_cornerRadius="24dp"
-            app:fb_shape="rectangle"
-            app:fb_rippleColor="#DCEDC8"
-            app:fb_textSize="18dp"
-            app:fb_textColor="#F5F5F5"
-            app:fb_text="Continue"
-            app:fb_backgroundColor="#ffb400"/>
+            android:text="Continue"
+            android:textSize="18sp"
+            android:textColor="@color/white"
+            android:background="@drawable/rounder_button"
+            android:inputType="text"/>
 
     </LinearLayout>
 </FrameLayout>
