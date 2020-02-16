@@ -16,6 +16,7 @@ MERGED from [androidx.navigation:navigation-fragment:2.0.0] C:\Users\Nikolaj\.gr
 MERGED from [com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:17:1-38:12
 MERGED from [com.google.android.gms:play-services-location:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\3c441937713772a721e73be8f405662d\play-services-location-17.0.0\AndroidManifest.xml:2:1-9:12
 MERGED from [com.jaredrummler:material-spinner:1.3.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\3e4ba551ccaa36f09617206ecc6699c2\material-spinner-1.3.1\AndroidManifest.xml:2:1-9:12
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\ccc4f60e4549c263b614feec2a027fa2\cardview-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.recyclerview:recyclerview:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bbc51c53aec70aeae5178e82f15e817a\recyclerview-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.legacy:legacy-support-core-ui:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\abc680e55824c418c024460e31034ed4\legacy-support-core-ui-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-runtime:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\f023d2a83fa18e6545968170e4e35498\navigation-runtime-2.0.0\AndroidManifest.xml:17:1-22:12
@@ -31,7 +32,6 @@ MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] C:\Users\Nikolaj\.grad
 MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\66e997bde0b6ece28f7fd36f5f4a1584\lifecycle-livedata-core-2.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.arch.core:core-runtime:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\8787729f29cf7add1bc29c81caccddfd\core-runtime-2.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.transition:transition:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\402e2fb3baa5e6ca3b4a0d7ccbd7cd5b\transition-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\ccc4f60e4549c263b614feec2a027fa2\cardview-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\f3997ce16a5c00ae84a772d300d0e1e8\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\04087833f388d5ffa97a080d757646c2\coordinatorlayout-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\34085af895daa23049fd0af188e6a001\drawerlayout-1.0.0\AndroidManifest.xml:17:1-22:12
@@ -213,6 +213,8 @@ MERGED from [com.google.android.gms:play-services-location:17.0.0] C:\Users\Niko
 MERGED from [com.google.android.gms:play-services-location:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\3c441937713772a721e73be8f405662d\play-services-location-17.0.0\AndroidManifest.xml:5:5-44
 MERGED from [com.jaredrummler:material-spinner:1.3.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\3e4ba551ccaa36f09617206ecc6699c2\material-spinner-1.3.1\AndroidManifest.xml:5:5-7:41
 MERGED from [com.jaredrummler:material-spinner:1.3.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\3e4ba551ccaa36f09617206ecc6699c2\material-spinner-1.3.1\AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\ccc4f60e4549c263b614feec2a027fa2\cardview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\ccc4f60e4549c263b614feec2a027fa2\cardview-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.recyclerview:recyclerview:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bbc51c53aec70aeae5178e82f15e817a\recyclerview-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.recyclerview:recyclerview:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bbc51c53aec70aeae5178e82f15e817a\recyclerview-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.legacy:legacy-support-core-ui:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\abc680e55824c418c024460e31034ed4\legacy-support-core-ui-1.0.0\AndroidManifest.xml:20:5-44
@@ -243,8 +245,6 @@ MERGED from [androidx.arch.core:core-runtime:2.0.0] C:\Users\Nikolaj\.gradle\cac
 MERGED from [androidx.arch.core:core-runtime:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\8787729f29cf7add1bc29c81caccddfd\core-runtime-2.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.transition:transition:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\402e2fb3baa5e6ca3b4a0d7ccbd7cd5b\transition-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.transition:transition:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\402e2fb3baa5e6ca3b4a0d7ccbd7cd5b\transition-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\ccc4f60e4549c263b614feec2a027fa2\cardview-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.cardview:cardview:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\ccc4f60e4549c263b614feec2a027fa2\cardview-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\f3997ce16a5c00ae84a772d300d0e1e8\viewpager-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\f3997ce16a5c00ae84a772d300d0e1e8\viewpager-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\04087833f388d5ffa97a080d757646c2\coordinatorlayout-1.0.0\AndroidManifest.xml:20:5-44

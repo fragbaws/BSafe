@@ -14,6 +14,10 @@
     <string name="menu_profile">My Profile</string>
     <string name="menu_sign_out">Sign Out</string>
     <string name="menu_previous_alerts">Previous Alerts</string>
+    <string name="menu_sos">SOS</string>
+
+
+    <string name="about_me">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur</string>
 
 
 </resources>

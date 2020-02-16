@@ -13,12 +13,15 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -64,7 +67,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private static final DecimalFormat df = new DecimalFormat("#.###");
     private static final double MS2KMH = 3.6;
-    private static final int CLOSE_ZOOM = 15;
+    private static final int CLOSE_ZOOM = 13;
     private static final float NS2S = 1.0f / 1000000000.0f;
     private static final double RAD2D = 180.0 / Math.PI;
     private static final double GRAVITY_CONSTANT = 9.81;
@@ -106,7 +109,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private Runnable threadSSD = new Runnable() {
         public void run()
         {
-            if(speedSSD.size() == 1500){ // 30 seconds
+            if(speedSSD.size() == 3000){ // 30 seconds
                 ssd = calcSSD(speedSSD);
                 if(ssdWriter != null){
                     ssdWriter.writeNext(new String[]{String.valueOf(ssd), DateFormat.getDateTimeInstance().format(new Date())});
@@ -116,7 +119,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 Log.d("SSD", "Current speed: " + speed);
                 speedSSD.add(speed);
             }
-            handlerSSD.postDelayed(this, 20); // set same as location request interval and other hardware sensors
+            handlerSSD.postDelayed(this, 100); // set same as location request interval and other hardware sensors
         }
     };
 
@@ -131,6 +134,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private String phoneNo, message;
 
+    private boolean running = false;
+
     private LocationCallback locationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
@@ -138,6 +143,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         if (locationResult.getLocations().size() > 0) {
                 oldLocation = newLocation;
                 newLocation = locationResult.getLastLocation();
+                Log.v("Location", newLocation.toString());
 
                 if (marker != null) {
                     marker.remove();
@@ -145,6 +151,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 MarkerOptions markerOptions = new MarkerOptions();
                 markerOptions.position(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()));
                 markerOptions.flat(true);
+                markerOptions.anchor(0.5f, 0.5f);
                 markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.car_top_view));
                 float bearing;
                 if (newLocation.hasBearing()) {
@@ -154,15 +161,23 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 }
                 markerOptions.rotation(bearing);
                 marker = googleMap.addMarker(markerOptions);
-                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
+                animateMarker(marker, newLocation);
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
 
                 if(oldLocation != null) {
                     //oldSpeed = speed;
                     Log.d("Location", "Time: " + oldLocation.getTime() + " " + newLocation.getTime());
                     Log.d("Location", "Distance: " + oldLocation.distanceTo(newLocation));
                     speed = calcSpeed(oldLocation, newLocation);
+
                 }
-                speedTxt.setText(String.format("%skm/h", df.format(((int) (speed * MS2KMH)))));
+                if(running){
+                    if(((int)speed*MS2KMH) <= 24) {
+                        speedTxt.setText("<24 km/h");
+                    }else{
+                        speedTxt.setText(String.format("%s km/h", df.format(((int) (speed * MS2KMH)))));
+                    }
+                }
                 Log.d("Location", "Current speed is " + ((int)speed*MS2KMH) +" km/h");
             }
         }
@@ -263,16 +278,18 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         handlerSSD = new Handler();
         monitorButton.setTag("ready");
 
+        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
+        } else {
+            Log.d("Location", "Could not load map fragment");
+        }
+
         monitorButton.setOnClickListener(v -> {
             if(v.getId() == monitorButton.getId()){
                 if(monitorButton.getTag().equals("ready")) {
-                    SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
-                    fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
-                    if (mapFragment != null) {
-                        mapFragment.getMapAsync(this);
-                    } else {
-                        Log.d("Location", "Could not load map fragment");
-                    }
+                    running = true;
                     manager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
@@ -280,10 +297,17 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     handlerSSD.postDelayed(threadSSD, 0);
                     monitorButton.setText("Stop Monitoring");
                     statusTxt.setText("Normal");
+                    speedTxt.setText("0 km/h");
                     monitorButton.setTag("running");
                 }else{
                     stop();
                 }
+            }
+        });
+
+        speedTxt.setOnClickListener(v -> {
+            if(newLocation!=null) {
+                SOS();
             }
         });
 
@@ -408,7 +432,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         stop();
     }
 
-    private void stop(){
+    public void stop(){
+        running = false;
         speedTxt.setText("N/A");
         monitorButton.setText("Start Monitoring");
         monitorButton.setTag("ready");
@@ -438,7 +463,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    private void SOS(){
+    public void SOS(){
         stop();
         Log.d("SOS", "Crash");
         statusTxt.setText("Crash");
@@ -483,19 +508,20 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         phoneNo = user.getEmergency();
         Log.i("SOS", "Building message for " + phoneNo);
         message = "This is an automated message from BSafe to alert that " + user.getFirstName() +" " + user.getSurname() +
-                        " just experienced a vehicle crash. Please send an emergency response unit to " + oldLocation.getLatitude() +", " + oldLocation.getLongitude()+") " +
+                        " just experienced a vehicle crash. Please send an emergency response unit to (" + newLocation.getLatitude() +", " + newLocation.getLongitude()+") " +
                         "now and pass them these details about " + user.getFirstName() +": " + "\n" +
                         "Mobile number: " + user.getMobile() + "\n" +
                         "Date of birth: " + user.getDob() + "\n" +
-                        "Height: " + user.getHeight() + "\n" +
-                        "Weight: " + user.getWeight() + "\n" +
+                        "Height: " + user.getHeight() + " cm\n" +
+                        "Weight: " + user.getWeight() + " kg\n" +
                         "Smoker: " + user.getSmoker() + "\n" +
                         "Bibulous: " + user.getBibulous() + "\n" +
                         "Medical condition: " + user.getMedicalCondition() + "\n" +
                         "Blood type: " + user.getBloodType() + "\n" +
-                        "Last speed: XY" + ((int)speed*MS2KMH) + " km/h \n" +
-                        "G-Force experienced: XY" + gforce + "\n\n" +
+                        "Last speed: " + speed + " km/h \n" +
+                        "G-Force experienced: " + gforce + "\n\n" +
                         "You received this message because " + user.getFirstName() + " has listed you as an emergency contact in BSafe.";
+
 
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.SEND_SMS)) {
@@ -505,7 +531,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         }else{
             Log.d("SOS", "Sending message to " + phoneNo);
             SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(phoneNo, null, message, null, null);
+            ArrayList<String> parts = smsManager.divideMessage(message);
+
+            smsManager.sendMultipartTextMessage(phoneNo, null, parts, null, null);
             Toast.makeText(getContext(), "Alert sent to emergency contact", Toast.LENGTH_LONG).show();
         }
     }
@@ -517,16 +545,55 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         requestLocation();
     }
 
+    public void animateMarker(final Marker marker, final Location location) {
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        final LatLng startLatLng = marker.getPosition();
+        final double startRotation = marker.getRotation();
+        final long duration = 500;
+
+        final Interpolator interpolator = new LinearInterpolator();
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = interpolator.getInterpolation((float) elapsed
+                        / duration);
+
+                double lng = t * location.getLongitude() + (1 - t)
+                        * startLatLng.longitude;
+                double lat = t * location.getLatitude() + (1 - t)
+                        * startLatLng.latitude;
+
+                float rotation = (float) (t * location.getBearing() + (1 - t)
+                        * startRotation);
+
+                marker.setPosition(new LatLng(lat, lng));
+                marker.setRotation(rotation);
+
+                if (t < 1.0) {
+                    // Post again 16ms later.
+                    handler.postDelayed(this, 16);
+                }
+            }
+        });
+    }
+
     private void requestLocation() {
         locationRequest = new LocationRequest();
         Log.d("Location", "Requesting location");
-        locationRequest.setFastestInterval(20);
+        locationRequest.setFastestInterval(100);
         locationRequest.setSmallestDisplacement(5);
         locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
-            //googleMap.setMyLocationEnabled(true);
+            googleMap.setMyLocationEnabled(true);
+            googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+            googleMap.setIndoorEnabled(false);
+            googleMap.setTrafficEnabled(true);
+            googleMap.setBuildingsEnabled(false);
             monitorButton.setTag("stop");
         } else {
             if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
@@ -570,7 +637,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     Log.d("SMS", "Sending SMS permitted");
                     Log.d("SOS", "Sending message to " + phoneNo);
                     SmsManager smsManager = SmsManager.getDefault();
-                    smsManager.sendTextMessage(phoneNo,null, message, null, null);
+                    ArrayList<String> parts = smsManager.divideMessage(message);
+                    smsManager.sendMultipartTextMessage(phoneNo, null, parts, null, null);
                     Toast.makeText(getContext(), "Alert sent to emergency contact.", Toast.LENGTH_LONG).show();
                 } else {
                     Log.d("SMS", "Sending SMS permission denied.");
@@ -578,4 +646,5 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }
         }
     }
+
 }

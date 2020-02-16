@@ -5,8 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,6 +16,7 @@ import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -23,6 +24,7 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.cda.entry.LoginActivity;
 import com.example.cda.entry.User;
+import com.example.cda.ui.home.HomeFragment;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.concurrent.Executor;
@@ -99,7 +101,6 @@ public class MainActivity extends AppCompatActivity {
                 .setNegativeButtonText("Cancel")
                 .build();
 
-
         navigationView.setNavigationItemSelectedListener(menuItem -> {
             int id = menuItem.getItemId();
 
@@ -110,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
                     return biometricSucceeded;
                 }
             }
+
 
             if(R.id.nav_sign_out == id){
                 Intent intent = new Intent(this, LoginActivity.class);
@@ -153,4 +155,5 @@ public class MainActivity extends AppCompatActivity {
     public User getUser(){
         return this.user;
     }
+
 }
