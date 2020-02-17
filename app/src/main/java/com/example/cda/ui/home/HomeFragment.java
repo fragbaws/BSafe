@@ -9,7 +9,10 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -472,6 +475,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     public void SOS(){
         stop();
+        Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        MediaPlayer mp = MediaPlayer.create(getContext(), notification);
+        mp.start();
         Log.d("SOS", "Crash");
         statusTxt.setText("Crash");
 
@@ -501,6 +507,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         if (((AlertDialog) dialog).isShowing()) {
                             Log.d("SOS", "Sending message to emergency contact");
                             sendAlert();
+                            mp.stop();
                             dialog.dismiss();
                         }
                     }
