@@ -103,23 +103,28 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private SensorManager manager;
     private float  timestamp_gyro;
 
-    private ArrayList<Double> speedSSD;
-    private double ssd = 0; //speed standard deviation
-    private Handler handlerSSD;
-    private Runnable threadSSD = new Runnable() {
+    private ArrayList<Double> speedValues;
+    private double speedDeviation = 0; //speed standard deviation
+    private Handler collectSpeedDataThreadHandler;
+    private Runnable collectSpeedDataThread = new Runnable() {
         public void run()
         {
-            if(speedSSD.size() == 3000){ // 30 seconds
-                ssd = calcSSD(speedSSD);
-                if(ssdWriter != null){
-                    ssdWriter.writeNext(new String[]{String.valueOf(ssd), DateFormat.getDateTimeInstance().format(new Date())});
-                }
-                speedSSD.clear();
-            }else {
-                Log.d("SSD", "Current speed: " + speed);
-                speedSSD.add(speed);
+            Log.d("SSD", "Current speed: " + speed);
+            speedValues.add(speed);
+            ssdWriter.writeNext(new String[]{"-", "-", String.valueOf((System.currentTimeMillis()/1000)), speed + "km/h"});
+            collectSpeedDataThreadHandler.postDelayed(this, 1000); // set same as location request interval
+        }
+    };
+    private Handler calculateSpeedDeviationThreadHandler;
+    private Runnable calculateSpeedDeviationThread = new Runnable() {
+        public void run()
+        {
+            speedDeviation = calculateSpeedDeviation(speedValues);
+            if(ssdWriter != null){
+                ssdWriter.writeNext(new String[]{String.valueOf(speedDeviation), DateFormat.getDateTimeInstance().format(new Date()), String.valueOf((System.currentTimeMillis()/1000))});
+                speedValues.clear();
             }
-            handlerSSD.postDelayed(this, 100); // set same as location request interval and other hardware sensors
+            calculateSpeedDeviationThreadHandler.postDelayed(this, 15000); // calculate speed deviation every 15 seconds
         }
     };
 
@@ -161,7 +166,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 }
                 markerOptions.rotation(bearing);
                 marker = googleMap.addMarker(markerOptions);
-                animateMarker(marker, newLocation);
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
 
                 if(oldLocation != null) {
@@ -229,7 +233,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                             "\n Speed: " + speed + "km/h" +
                             "\n Rotation: " + rotation + "°" +
                             "\n dB: " + db + "dB");
-                }else if((((gforce/G_FORCE_THRESHOLD) + (db/SOUND_PRESSURE_LEVEL_THRESHOLD) + (ssd/STANDARD_DEVIATION_THRESHOLD)) >= LOW_SPEED_ACCIDENT_THRESHOLD)){ // hit while slowly moving
+                }else if( (speed < VEHICLE_SPEED_THRESHOLD) && (((gforce/G_FORCE_THRESHOLD) + (db/SOUND_PRESSURE_LEVEL_THRESHOLD) + (speedDeviation/STANDARD_DEVIATION_THRESHOLD)) >= LOW_SPEED_ACCIDENT_THRESHOLD)){ // hit while slowly moving
                     crash = true;
                     triggeredEvent = "3";
                     Log.d("CDA", "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
@@ -239,7 +243,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 }else{
                     crash = false;
                 }
-                sensorWriter.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(((int)speed*MS2KMH)), String.valueOf(db), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date())});
+                sensorWriter.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(((int)speed*MS2KMH)), String.valueOf(db), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date()), String.valueOf(System.currentTimeMillis()/1000)});
                 if(crash){
                     SOS();
                 }
@@ -274,8 +278,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         statusTxt = root.findViewById(R.id.status_text);
         monitorButton = root.findViewById(R.id.monitor_button);
 
-        speedSSD = new ArrayList<>();
-        handlerSSD = new Handler();
+        speedValues = new ArrayList<>();
+        collectSpeedDataThreadHandler = new Handler();
+        calculateSpeedDeviationThreadHandler = new Handler();
         monitorButton.setTag("ready");
 
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
@@ -294,7 +299,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
                     startRecording();
-                    handlerSSD.postDelayed(threadSSD, 0);
+                    collectSpeedDataThreadHandler.postDelayed(collectSpeedDataThread, 0);
+                    calculateSpeedDeviationThreadHandler.postDelayed(calculateSpeedDeviationThread, 30000);
                     monitorButton.setText("Stop Monitoring");
                     statusTxt.setText("Normal");
                     speedTxt.setText("0 km/h");
@@ -318,13 +324,13 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         float time = (newLocation.getTime() - oldLocation.getTime()) / 1000;
         float distance = newLocation.distanceTo(oldLocation);
         float speed = distance / time;
-        if (speed < 1) {
+        if (speed < 1 || Double.isNaN(speed) || Double.isInfinite(speed)) {
             speed = 0;
         }
         return speed;
     }
 
-    private double calcSSD(ArrayList<Double> speeds){
+    private double calculateSpeedDeviation(ArrayList<Double> speeds){
         double tmp = 0;
         for(Double curr: speeds){
             tmp+=curr;
@@ -356,21 +362,21 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void run() {
                 db = getDB();
-                handler.postDelayed(this, 20);
+                handler.postDelayed(this, 150); //20ms caused alot of -Infinity values (rubbish values)
             }
-        }, 20);
+        }, 0);
     }
 
     private double getDB(){
         if(recorder != null){
             float maxAmplitude = recorder.getMaxAmplitude();
-            Log.d("Microphone","Amplitude: " + maxAmplitude);
             float db = (float) (20 * Math.log10(maxAmplitude));// / 32767.0f));
             Log.d("Microphone","Current DB: " + db);
-            if(db < 0){
+            if(db < 0 || Double.isInfinite(db) || Double.isNaN(db)){
                 return 0.0;
+            }else {
+                return db;
             }
-            return db;
         }
         else{
             return 0.0;
@@ -412,7 +418,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }else{
                 ssdWriter = new CSVWriter(new FileWriter(ssdPath));
             }
-            ssdWriter.writeNext(new String[]{"Standard Deviation", "Timestamp"});
+            ssdWriter.writeNext(new String[]{"Standard Deviation", "Timestamp", "Milliseconds"});
 
             if (f.exists() && !f.isDirectory()) {
                 mFileWriter = new FileWriter(filePath, true);
@@ -420,7 +426,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             } else {
                 sensorWriter = new CSVWriter(new FileWriter(filePath));
             }
-            sensorWriter.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp"});
+            sensorWriter.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp", "Milliseconds"});
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -435,11 +441,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     public void stop(){
         running = false;
         speedTxt.setText("N/A");
+        speedDeviation = 0;
         monitorButton.setText("Start Monitoring");
         monitorButton.setTag("ready");
         statusTxt.setText("Off");
-        handlerSSD.removeCallbacks(threadSSD);
-        speedSSD.clear();
+        collectSpeedDataThreadHandler.removeCallbacks(collectSpeedDataThread);
+        speedValues.clear();
         if (fusedLocationProviderClient != null) {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         }
@@ -545,47 +552,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         requestLocation();
     }
 
-    public void animateMarker(final Marker marker, final Location location) {
-        final Handler handler = new Handler();
-        final long start = SystemClock.uptimeMillis();
-        final LatLng startLatLng = marker.getPosition();
-        final double startRotation = marker.getRotation();
-        final long duration = 500;
-
-        final Interpolator interpolator = new LinearInterpolator();
-
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                long elapsed = SystemClock.uptimeMillis() - start;
-                float t = interpolator.getInterpolation((float) elapsed
-                        / duration);
-
-                double lng = t * location.getLongitude() + (1 - t)
-                        * startLatLng.longitude;
-                double lat = t * location.getLatitude() + (1 - t)
-                        * startLatLng.latitude;
-
-                float rotation = (float) (t * location.getBearing() + (1 - t)
-                        * startRotation);
-
-                marker.setPosition(new LatLng(lat, lng));
-                marker.setRotation(rotation);
-
-                if (t < 1.0) {
-                    // Post again 16ms later.
-                    handler.postDelayed(this, 16);
-                }
-            }
-        });
-    }
-
     private void requestLocation() {
         locationRequest = new LocationRequest();
         Log.d("Location", "Requesting location");
-        locationRequest.setFastestInterval(100);
-        locationRequest.setSmallestDisplacement(5);
-        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        locationRequest.setInterval(1000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
