@@ -74,7 +74,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private static final String TAG = "HOME";
 
     private static final double MS2KMH = 3.6;
-    private static final int CLOSE_ZOOM = 13;
+    private static final int CLOSE_ZOOM = 15;
     private static final float NS2S = 1.0f / 1000000000.0f;
     private static final double RAD2D = 180.0 / Math.PI;
     private static final double GRAVITY_CONSTANT = 9.81;
@@ -257,8 +257,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_home, container, false);
-
-
 
         init(root);
 
