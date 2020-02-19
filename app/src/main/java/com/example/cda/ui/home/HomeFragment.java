@@ -68,7 +68,6 @@ import static android.os.Environment.getExternalStorageDirectory;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
-    private static final DecimalFormat df = new DecimalFormat("#.###");
     private static final double MS2KMH = 3.6;
     private static final int CLOSE_ZOOM = 13;
     private static final float NS2S = 1.0f / 1000000000.0f;
@@ -100,13 +99,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private Marker marker;
     private Location oldLocation;
     private Location newLocation;
-    private double speed, gforce, rotation,db;
+    private int speed;
+    private double gforce, rotation,db;
     private boolean crash = false;
 
     private SensorManager manager;
     private float  timestamp_gyro;
 
-    private ArrayList<Double> speedValues;
+    private ArrayList<Integer> speedValues;
     private double speedDeviation = 0; //speed standard deviation
     private Handler collectSpeedDataThreadHandler;
     private Runnable collectSpeedDataThread = new Runnable() {
@@ -179,13 +179,13 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
                 }
                 if(running){
-                    if(((int)speed*MS2KMH) <= 24) {
+                    if(speed <= 24) {
                         speedTxt.setText("<24 km/h");
                     }else{
-                        speedTxt.setText(String.format("%s km/h", df.format(((int) (speed * MS2KMH)))));
+                        speedTxt.setText(String.format("%s km/h", speed));
                     }
                 }
-                Log.d("Location", "Current speed is " + ((int)speed*MS2KMH) +" km/h");
+                Log.d("Location", "Current speed is " + speed +" km/h");
             }
         }
     };
@@ -246,7 +246,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 }else{
                     crash = false;
                 }
-                sensorWriter.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(((int)speed*MS2KMH)), String.valueOf(db), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date()), String.valueOf(System.currentTimeMillis()/1000)});
+                sensorWriter.writeNext(new String[]{String.valueOf(rotation), String.valueOf(gforce), String.valueOf(speed), String.valueOf(db), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date()), String.valueOf(System.currentTimeMillis()/1000)});
                 if(crash){
                     SOS();
                 }
@@ -297,6 +297,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         monitorButton.setOnClickListener(v -> {
             if(v.getId() == monitorButton.getId()){
                 if(monitorButton.getTag().equals("ready")) {
+                    sensorWriter.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp", "Milliseconds"});
+                    ssdWriter.writeNext(new String[]{"Standard Deviation", "Timestamp", "Milliseconds"});
                     running = true;
                     manager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
@@ -323,24 +325,24 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         return root;
     }
 
-    private float calcSpeed(Location oldLocation, Location newLocation){
+    private int calcSpeed(Location oldLocation, Location newLocation){
         float time = (newLocation.getTime() - oldLocation.getTime()) / 1000;
         float distance = newLocation.distanceTo(oldLocation);
         float speed = distance / time;
         if (speed < 1 || Double.isNaN(speed) || Double.isInfinite(speed)) {
             speed = 0;
         }
-        return speed;
+        return (int) (speed*MS2KMH);
     }
 
-    private double calculateSpeedDeviation(ArrayList<Double> speeds){
+    private double calculateSpeedDeviation(ArrayList<Integer> speeds){
         double tmp = 0;
-        for(Double curr: speeds){
+        for(Integer curr: speeds){
             tmp+=curr;
         }
         double mean = tmp/speeds.size();
         double sum = 0;
-        for(Double curr: speeds){
+        for(Integer curr: speeds){
             sum += Math.pow((curr - mean), 2);
         }
         return Math.sqrt(sum/speeds.size());
@@ -421,7 +423,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }else{
                 ssdWriter = new CSVWriter(new FileWriter(ssdPath));
             }
-            ssdWriter.writeNext(new String[]{"Standard Deviation", "Timestamp", "Milliseconds"});
 
             if (f.exists() && !f.isDirectory()) {
                 mFileWriter = new FileWriter(filePath, true);
@@ -429,7 +430,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             } else {
                 sensorWriter = new CSVWriter(new FileWriter(filePath));
             }
-            sensorWriter.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp", "Milliseconds"});
         } catch (IOException e) {
             e.printStackTrace();
         }
