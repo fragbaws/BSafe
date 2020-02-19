@@ -1,10 +1,17 @@
 package com.example.cda.entry;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -15,9 +22,21 @@ import com.example.cda.MainActivity;
 import com.example.cda.R;
 import com.github.nikartm.button.FitButton;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 public class LoginActivity extends AppCompatActivity{
 
     private static final int REQUEST_SIGNUP = 0;
+    private static final int PERMISSION_REQUEST = 333;
+
+    private static final String[] PERMISSIONS = new String[]{
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.SEND_SMS
+    };
     public static DBHelper sql;
 
     private EditText emailText;
@@ -31,6 +50,13 @@ public class LoginActivity extends AppCompatActivity{
         getSupportActionBar().hide();
         setContentView(R.layout.activity_login);
 
+        if(checkAndRequestPermissions()){
+            init();
+        }
+
+    }
+
+    private void init(){
         sql = new DBHelper(this);
 
         this.emailText = findViewById(R.id.input_email);
@@ -114,6 +140,80 @@ public class LoginActivity extends AppCompatActivity{
         if (requestCode == REQUEST_SIGNUP) {
             if (resultCode == RESULT_OK) {
                 Toast.makeText(getApplicationContext(), "Registration complete, please login.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private boolean checkAndRequestPermissions() {
+        ArrayList<String> permissionsRequired = new ArrayList<>();
+        for (String permission : PERMISSIONS) {
+            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsRequired.add(permission);
+            }
+        }
+
+        if (!permissionsRequired.isEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsRequired.toArray(new String[permissionsRequired.size()]), PERMISSION_REQUEST);
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if(requestCode == PERMISSION_REQUEST){
+            Map<String, Integer> permissionResults = new HashMap<>();
+            int denied = 0;
+
+            for(int i =0; i<grantResults.length;i++){
+                if(grantResults[i] == PackageManager.PERMISSION_DENIED){
+                    permissionResults.put(permissions[i], grantResults[i]);
+                    denied++;
+                }
+            }
+
+            if(denied == 0){
+                init();
+            }else{
+                for(Map.Entry<String, Integer> entry: permissionResults.entrySet()){
+                    String permission = entry.getKey();
+                    //if permission has been denied first time and "never ask again" is not checked
+                    if(ActivityCompat.shouldShowRequestPermissionRationale(this,permission)){
+                        new AlertDialog.Builder(this)
+                                .setTitle("")
+                                .setCancelable(true)
+                                .setMessage("This app requires all permissions to work properly")
+                                .setPositiveButton("Grant Permissions",
+                                        (dialog, which) -> {
+                                            dialog.dismiss();
+                                            checkAndRequestPermissions();
+                                        })
+                                .setNegativeButton("Exit",
+                                        (dialog, which) -> {
+                                            dialog.dismiss();
+                                            finish();
+                                        })
+                                .show();
+                    }else{ // if permission has been denied and "never ask again" was checked
+                        new AlertDialog.Builder(this)
+                                .setTitle("")
+                                .setCancelable(true)
+                                .setMessage("You previously denied permissions. Please allow all permissions.")
+                                .setPositiveButton("Go to Settings",
+                                        (dialog, which) -> {
+                                            dialog.dismiss();
+                                            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:com.example.cda")));
+                                            finish();
+                                        })
+                                .setNegativeButton("Exit",
+                                        (dialog, which) -> {
+                                            dialog.dismiss();
+                                            finish();
+                                        })
+                                .show();
+                        break;
+                    }
+                }
             }
         }
     }

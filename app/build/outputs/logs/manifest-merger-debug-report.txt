@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-40:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-40:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-40:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-40:12
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
 MERGED from [com.github.nikartm:fit-button:1.2.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\6cd3928b2421a9ba624fa0a5227cb7a9\fit-button-1.2.1\AndroidManifest.xml:2:1-11:12
 MERGED from [androidx.navigation:navigation-ui:2.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\4a35834ee991c5e020532b48db5e5899\jetified-navigation-ui-2.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [com.google.android.material:material:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\cb634fe4b4d1fdfcd5255e485d30a0c1\material-1.0.0\AndroidManifest.xml:17:1-24:12
@@ -56,63 +56,59 @@ MERGED from [androidx.lifecycle:lifecycle-service:2.0.0] C:\Users\Nikolaj\.gradl
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.1.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\0554424e228349ffc3db0700d1324aa1\lifecycle-runtime-2.1.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.1.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\bad233a64070d55cab9a83b26afbf154\lifecycle-viewmodel-2.1.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.savedstate:savedstate:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\7acef2a7bfef3795312317efec15d83e\savedstate-1.0.0\AndroidManifest.xml:17:1-24:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-40:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-40:12
-INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-40:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
+INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
 	package
 		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:3:5-30
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
 	android:versionName
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-40:12
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
 	android:versionCode
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-40:12
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:1-39:12
 		INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
 	xmlns:android
 		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:2:11-69
-uses-permission#android.permission.ACCESS_COARSE_LOCATION
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:5:5-81
-	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:5:22-78
 uses-permission#android.permission.ACCESS_FINE_LOCATION
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:6:5-79
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:5:5-79
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:6:22-76
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:5:22-76
 uses-permission#android.permission.INTERNET
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:7:5-67
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:6:5-67
 MERGED from [com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:24:5-67
 MERGED from [com.google.android.gms:play-services-maps:17.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\71410d59386dba98cbe61d29bc62f196\play-services-maps-17.0.0\AndroidManifest.xml:24:5-67
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:7:22-64
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:6:22-64
 uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:8:5-81
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:7:5-81
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:8:22-78
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:7:22-78
 uses-permission#android.permission.RECORD_AUDIO
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:9:5-71
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:8:5-71
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:9:22-68
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:8:22-68
 uses-permission#android.permission.USE_BIOMETRIC
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:10:5-72
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:9:5-72
 MERGED from [androidx.biometric:biometric:1.0.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\49dbb50ae2b3f91d763de38bb7976978\biometric-1.0.1\AndroidManifest.xml:24:5-72
 MERGED from [androidx.biometric:biometric:1.0.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\49dbb50ae2b3f91d763de38bb7976978\biometric-1.0.1\AndroidManifest.xml:24:5-72
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:10:22-69
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:9:22-69
 uses-permission#android.permission.USE_FINGERPRINT
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:11:5-74
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:10:5-74
 MERGED from [androidx.biometric:biometric:1.0.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\49dbb50ae2b3f91d763de38bb7976978\biometric-1.0.1\AndroidManifest.xml:25:5-74
 MERGED from [androidx.biometric:biometric:1.0.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\49dbb50ae2b3f91d763de38bb7976978\biometric-1.0.1\AndroidManifest.xml:25:5-74
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:11:22-71
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:10:22-71
 uses-permission#android.permission.SEND_SMS
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:12:5-67
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:11:5-67
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:12:22-64
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:11:22-64
 application
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:14:5-38:19
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:13:5-37:19
 MERGED from [com.google.android.material:material:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\cb634fe4b4d1fdfcd5255e485d30a0c1\material-1.0.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.0.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\cb634fe4b4d1fdfcd5255e485d30a0c1\material-1.0.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.biometric:biometric:1.0.1] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\49dbb50ae2b3f91d763de38bb7976978\biometric-1.0.1\AndroidManifest.xml:27:5-32:19
@@ -142,49 +138,49 @@ MERGED from [androidx.lifecycle:lifecycle-process:2.0.0] C:\Users\Nikolaj\.gradl
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.1.0] C:\Users\Nikolaj\.gradle\caches\transforms-2\files-2.1\c527b78844be871c44103f6f45a963fb\core-1.1.0\AndroidManifest.xml:24:18-86
 	android:supportsRtl
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:19:9-35
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:18:9-35
 	android:label
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:17:9-41
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:16:9-41
 	android:roundIcon
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:18:9-54
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:17:9-54
 	android:icon
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:16:9-43
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:15:9-43
 	android:allowBackup
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:15:9-35
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:14:9-35
 	android:theme
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:20:9-40
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:19:9-40
 activity#com.example.cda.MainActivity
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:21:9-25:20
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:20:9-24:20
 	android:label
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:23:13-63
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:22:13-63
 	android:theme
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:24:13-56
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:23:13-56
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:22:13-41
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:21:13-41
 activity#com.example.cda.entry.SignupActivity
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:9-58
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:25:9-58
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:19-55
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:25:19-55
 activity#com.example.cda.entry.LoginActivity
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:27:9-33:20
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:9-32:20
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:27:19-54
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:26:19-54
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:28:13-32:29
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:27:13-31:29
 action#android.intent.action.MAIN
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:29:17-69
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:28:17-69
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:29:25-66
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:28:25-66
 category#android.intent.category.LAUNCHER
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:31:17-77
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:30:17-77
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:31:27-74
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:30:27-74
 meta-data#com.google.android.geo.API_KEY
-ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:35:9-37:71
+ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:34:9-36:71
 	android:value
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:37:13-68
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:36:13-68
 	android:name
-		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:36:13-58
+		ADDED from D:\University\Android\cda\app\src\main\AndroidManifest.xml:35:13-58
 uses-sdk
 INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from D:\University\Android\cda\app\src\main\AndroidManifest.xml
