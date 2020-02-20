@@ -257,38 +257,24 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_home, container, false);
-
-        init(root);
-
-        return root;
-    }
-
-    private void init(View root){
         speedTxt = root.findViewById(R.id.speed_text);
         statusTxt = root.findViewById(R.id.status_text);
         monitorButton = root.findViewById(R.id.monitor_button);
         monitorButton.setTag("ready");
 
-        setupWriters();
-        isLocationServiceEnabled();
 
         speedValues = new ArrayList<>();
         collectSpeedDataThreadHandler = new Handler();
         calculateSpeedDeviationThreadHandler = new Handler();
 
-        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        } else {
-            Log.v(TAG, "Could not load map fragment");
-        }
 
         monitorButton.setOnClickListener(v -> {
             if(v.getId() == monitorButton.getId()){
                 if(monitorButton.getTag().equals("ready")) {
                     Log.v(TAG, "Activating crash detection algorithm...");
                     running = true;
+                    setupWriters();
+
 
                     sensorWriter.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp", "Milliseconds"});
                     ssdWriter.writeNext(new String[]{"Standard Deviation", "Timestamp", "Milliseconds"});
@@ -316,6 +302,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 SOS();
             }
         });
+
+        return root;
     }
 
     private int calcSpeed(Location oldLocation, Location newLocation){
@@ -384,37 +372,46 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(running){
-            stop();
-        }
+        stop();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if(running) {
-            stop();
+        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
+        } else {
+            Log.v(TAG, "Could not load map fragment");
+        }
+        if(ssdWriter == null || sensorWriter == null) {
+            setupWriters();
         }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if(running){
-            stop();
-        }
+        stop();
     }
 
     private void stop(){
-        Log.v(TAG, "Deactivating crash detection algorithm...");
         running = false;
         speedTxt.setText("N/A");
         speedDeviation = 0;
         monitorButton.setText("Start Monitoring");
         monitorButton.setTag("ready");
         statusTxt.setText("Off");
-        collectSpeedDataThreadHandler.removeCallbacks(collectSpeedDataThread);
-        speedValues.clear();
+        if(speedValues != null) {
+            speedValues.clear();
+        }
+        if(collectSpeedDataThreadHandler.hasCallbacks(collectSpeedDataThread)){
+            collectSpeedDataThreadHandler.removeCallbacks(collectSpeedDataThread);
+        }
+        if(calculateSpeedDeviationThreadHandler.hasCallbacks(calculateSpeedDeviationThread)){
+            calculateSpeedDeviationThreadHandler.removeCallbacks(collectSpeedDataThread);
+        }
         if (fusedLocationProviderClient != null) {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         }
@@ -521,7 +518,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private void requestLocation() {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(1000);
+        locationRequest.setInterval(2000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
         googleMap.setMyLocationEnabled(true);
@@ -531,29 +528,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         googleMap.setBuildingsEnabled(false);
     }
 
-    private void isLocationServiceEnabled(){
-        Log.v(TAG, "Checking if location service is enabled...");
-        LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
-        boolean gps_enabled = false;
-        boolean network_enabled = false;
 
-        try {
-            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        } catch(Exception ignored) {}
-
-        try {
-            network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-        } catch(Exception ignored) {}
-
-        if(!gps_enabled && !network_enabled){
-            Log.v(TAG, "Location services are disabled, opening location settings...");
-            new AlertDialog.Builder(new ContextThemeWrapper(getContext(), R.style.AlertStyle))
-                    .setMessage("The application will not work without location services.")
-                    .setPositiveButton("Open Location Settings", (paramDialogInterface, paramInt) -> getContext().startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)))
-                    .setCancelable(false)
-                    .show();
-        }
-    }
 
     private void setupWriters(){
         audioName = getActivity().getExternalCacheDir().getAbsolutePath() + "/audiorecordtest.3gp";

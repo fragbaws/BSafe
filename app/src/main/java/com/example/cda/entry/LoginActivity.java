@@ -7,11 +7,15 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -56,9 +60,30 @@ public class LoginActivity extends AppCompatActivity{
 
     }
 
+    private void isLocationServiceEnabled(){
+        LocationManager lm = (LocationManager)getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
+
+        try {
+            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch(Exception ignored) {}
+
+        try {
+            network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch(Exception ignored) {}
+
+        if(!gps_enabled && !network_enabled){
+            new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.AlertStyle))
+                    .setMessage("The application will not work without location services.")
+                    .setPositiveButton("Open Location Settings", (paramDialogInterface, paramInt) -> this.startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)))
+                    .setCancelable(false)
+                    .show();
+        }
+    }
     private void init(){
         sql = new DBHelper(this);
-
+        isLocationServiceEnabled();
         this.emailText = findViewById(R.id.input_email);
         this.passwordText = findViewById(R.id.input_password);
         this.loginBtn = findViewById(R.id.login_button);

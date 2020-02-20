@@ -112,6 +112,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+            if(id == R.id.nav_home && !navigationView.getMenu().findItem(R.id.nav_home).isChecked()){
+                NavigationUI.onNavDestinationSelected(menuItem, navController);
+                drawer.closeDrawer(GravityCompat.START);
+                return true;
+            }
+
 
             if(R.id.nav_sign_out == id){
                 Intent intent = new Intent(this, LoginActivity.class);
