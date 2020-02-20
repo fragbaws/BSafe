@@ -369,6 +369,28 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    private void isLocationServiceEnabled(){
+        LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
+        boolean gps_enabled = false;
+        boolean network_enabled = false;
+
+        try {
+            gps_enabled = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        } catch(Exception ignored) {}
+
+        try {
+            network_enabled = lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+        } catch(Exception ignored) {}
+
+        if(!gps_enabled && !network_enabled){
+            new AlertDialog.Builder(new ContextThemeWrapper(getContext(), R.style.AlertStyle))
+                    .setMessage("The application will not work without location services.")
+                    .setPositiveButton("Open Location Settings", (paramDialogInterface, paramInt) -> startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)))
+                    .setCancelable(false)
+                    .show();
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -378,6 +400,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onResume() {
         super.onResume();
+        isLocationServiceEnabled();
         mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
         if (mapFragment != null) {
