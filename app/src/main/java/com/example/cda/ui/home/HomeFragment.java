@@ -56,6 +56,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -67,12 +68,14 @@ import static com.example.cda.utils.Constant.CLOSE_ZOOM;
 import static com.example.cda.utils.Constant.COUNT_DOWN_INTERVAL_MILLIS;
 import static com.example.cda.utils.Constant.LOCATION_INTERVAL_SECS;
 import static com.example.cda.utils.Constant.MICROPHONE_INTERVAL_SECS;
+import static com.example.cda.utils.Constant.MS2KMH;
 import static com.example.cda.utils.Constant.SECS2MS;
 import static com.example.cda.utils.Constant.VEHICLE_SPEED_THRESHOLD;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback {
     
     private static final String TAG = "HOME";
+    private static final String THREAD = "THREAD";
 
     private static final Calculator calculator = Calculator.getInstance();
     private PrimaryData primaryData;
@@ -81,8 +84,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private ArrayList<Double> bufferGForce;
     private ArrayList<Double> bufferDecibel;
 
-    private Handler calculateAverageThreadHandler;
-    private Runnable calculateAverageThread = new Runnable() {
+    private Handler calculateRunningAverageThreadHandler;
+    private Runnable calculateRunningAverageThread = new Runnable() {
         @Override
         public void run() {
 
@@ -105,12 +108,52 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 bufferDecibel.clear();
             }
 
-            Log.v("THREAD", "Rotation" + primaryData.getBufferRotation());
-            Log.v("THREAD", "GForce" + primaryData.getBufferGForce());
-            Log.v("THREAD", "Decibels" + primaryData.getBufferDecibels());
-            Log.v("THREAD", "Speed" + primaryData.getBufferSpeed());
+            Log.v(THREAD, "Rotation" + primaryData.getBufferRotation());
+            Log.v(THREAD, "GForce" + primaryData.getBufferGForce());
+            Log.v(THREAD, "Decibels" + primaryData.getBufferDecibels());
+            Log.v(THREAD, "Speed" + primaryData.getBufferSpeed());
 
-            calculateAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+            calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+        }
+    };
+
+    private Handler calculateRateOfChangeThreadHandler;
+    private Runnable calculateRateOfChangeThread = new Runnable() {
+        @Override
+        public void run() {
+            //double[] rotationPair = primaryData.getBufferRotation().getRecentPair(); Exists where resulting rotation is calculate (omega rad/s)
+            double[] gForcePair = primaryData.getBufferGForce().getRecentPair();
+            double[] decibelPair = primaryData.getBufferDecibels().getRecentPair();
+            double[] speedPair = primaryData.getBufferSpeed().getRecentPair();
+
+            //double rotationROC, 
+            double jerk, decibelROC, speedROC;
+            /*if(rotationPair != null){
+                rotationROC = calculator.calculateRateOfChange(rotationPair[1], rotationPair[0], )
+            }*/
+            
+            if(gForcePair != null){
+                jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0]);
+                primaryData.getBufferGForceROC().add(jerk);
+            }
+
+            if(decibelPair != null){
+                decibelROC = calculator.calculateRateOfChange(decibelPair[1], decibelPair[0]);
+                primaryData.getBufferDecibelROC().add(decibelROC);
+            }
+
+            if(speedPair != null){
+                speedROC = calculator.calculateRateOfChange(speedPair[1]/MS2KMH, speedPair[0]/MS2KMH); // converting to m/s as speed rate of change = acceleration
+                primaryData.getBufferSpeedROC().add(speedROC);
+            }
+
+
+            //Log.v(THREAD, "Rotation ROC" + Arrays.toString(primaryData.getBufferRotation().getRecentPair()));
+            Log.v(THREAD, "GForce ROC" + primaryData.getBufferGForceROC());
+            Log.v(THREAD, "Decibels ROC" + primaryData.getBufferDecibelROC());
+            Log.v(THREAD, "Speed ROC" + primaryData.getBufferSpeedROC());
+
+            calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
         }
     };
 
@@ -200,7 +243,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     if(primaryData.getCurrentSpeed() <= VEHICLE_SPEED_THRESHOLD) {
                         speedTxt.setText("<24 km/h");
                     }else{
-                        speedTxt.setText(String.format("%s km/h", primaryData.getCurrentSpeed()));
+                        speedTxt.setText(String.format("%s km/h", (int) primaryData.getCurrentSpeed()));
                     }
                 }
             }
@@ -275,7 +318,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         bufferDecibel = new ArrayList<>();
         bufferGForce = new ArrayList<>();
         bufferRotation = new ArrayList<>();
-        calculateAverageThreadHandler = new Handler();
+        calculateRunningAverageThreadHandler = new Handler();
+        calculateRateOfChangeThreadHandler = new Handler();
 
   /*      speedValues = new ArrayList<>();
         collectSpeedDataThreadHandler = new Handler();
@@ -296,7 +340,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
                     startRecording();
-                    calculateAverageThreadHandler.postDelayed(calculateAverageThread, 0);
+                    calculateRateOfChangeThreadHandler.postDelayed(calculateRateOfChangeThread, (long) (LOCATION_INTERVAL_SECS*SECS2MS*2));
+                    calculateRunningAverageThreadHandler.postDelayed(calculateRunningAverageThread, 0);
 
 /*                    Log.v(TAG, "Activating threads for speed standard deviation calculations...");
                     collectSpeedDataThreadHandler.postDelayed(collectSpeedDataThread, 0);
@@ -401,11 +446,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         monitorButton.setText("Start Monitoring");
         monitorButton.setTag("ready");
         statusTxt.setText("Off");
-        if(calculateAverageThreadHandler.hasCallbacks(calculateAverageThread)){
-            calculateAverageThreadHandler.removeCallbacks(calculateAverageThread);
+        if(calculateRunningAverageThreadHandler.hasCallbacks(calculateRunningAverageThread)){
+            calculateRunningAverageThreadHandler.removeCallbacks(calculateRunningAverageThread);
+        }
+        if(calculateRateOfChangeThreadHandler.hasCallbacks(calculateRateOfChangeThread)){
+            calculateRateOfChangeThreadHandler.removeCallbacks(calculateRateOfChangeThread);
         }
         if(primaryData != null){
-            primaryData = new PrimaryData(BUFFER_SIZE);
+            primaryData.clearBuffers();
         }
         /*if(speedValues != null) {
             speedValues.clear();
@@ -497,7 +545,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         "Bibulous: " + user.getBibulous() + "\n" +
                         "Medical condition: " + user.getMedicalCondition() + "\n" +
                         "Blood type: " + user.getBloodType() + "\n" +
-                        "Last speed: " + primaryData.getCurrentSpeed() + " km/h \n" +
+                        "Last speed: " + (int) primaryData.getCurrentSpeed() + " km/h \n" +
                         "G-Force experienced: " + primaryData.getCurrentGForce() + "\n\n" +
                         "You received this message because " + user.getFirstName() + " has listed you as an emergency contact in BSafe.";
 

@@ -1,5 +1,6 @@
 package com.example.cda.utils;
 
+import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class CircularQueue<E> extends ArrayBlockingQueue<E> {
@@ -18,5 +19,9 @@ public class CircularQueue<E> extends ArrayBlockingQueue<E> {
             this.remove();
         }
         return super.add(e);
+    }
+
+    public double[] getRecentPair(){
+        return new double[]{(double) this.toArray()[this.size()-1], (double) this.toArray()[this.size()-2]};
     }
 }

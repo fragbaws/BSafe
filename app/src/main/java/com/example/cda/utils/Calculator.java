@@ -22,14 +22,14 @@ public class Calculator {
         return instance;
     }
 
-    public int calculateCurrentSpeed(Location prev, Location curr){
+    public double calculateCurrentSpeed(Location prev, Location curr){
         float time = (curr.getTime() - prev.getTime()) / 1000;
         float distance = curr.distanceTo(prev);
         float speed = distance / time;
         if (speed < 1 || Double.isNaN(speed) || Double.isInfinite(speed)) {
             speed = 0;
         }
-        return (int) (speed*Constant.MS2KMH);
+        return (speed*Constant.MS2KMH);
     }
 
     public double calculateSpeedDeviation(ArrayList<Integer> speeds){
@@ -70,16 +70,16 @@ public class Calculator {
         float pitch = x;
         float roll = y;
         float yaw = z;
-        float omegaMag = (float) Math.sqrt(pitch*pitch + roll*roll);
+        float omegaMag = (float) Math.sqrt(pitch*pitch + roll*roll); // d0/dt
 
         // angular rotation in radians
         float theta = omegaMag * dT;
         return theta * Constant.RAD2D;
     }
 
-    public double calculateRateOfChange(double prevVal, double currVal, double dt){
+    public double calculateRateOfChange(double prevVal, double currVal){
         double dv = currVal - prevVal;
-        return dv/dt;
+        return dv/1;
     }
 
     public double calculateAverage(List<Double> list){
