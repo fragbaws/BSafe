@@ -122,9 +122,16 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         @Override
         public void run() {
             //double[] rotationPair = primaryData.getBufferRotation().getRecentPair(); Exists where resulting rotation is calculate (omega rad/s)
-            double[] gForcePair = primaryData.getBufferGForce().getRecentPair();
-            double[] decibelPair = primaryData.getBufferDecibels().getRecentPair();
-            double[] speedPair = primaryData.getBufferSpeed().getRecentPair();
+            double[] gForcePair = null, decibelPair = null, speedPair = null;
+            if(primaryData.getBufferSpeed().size() >= 2) {
+                speedPair = primaryData.getBufferSpeed().getRecentPair();
+            }
+            if(primaryData.getBufferGForce().size() >= 2) {
+                gForcePair = primaryData.getBufferGForce().getRecentPair();
+            }
+            if(primaryData.getBufferDecibels().size() >= 2) {
+                decibelPair = primaryData.getBufferDecibels().getRecentPair();
+            }
 
             //double rotationROC, 
             double jerk, decibelROC, speedROC;
