@@ -1,0 +1,22 @@
+package com.example.cda.utils;
+
+import java.util.concurrent.ArrayBlockingQueue;
+
+public class CircularQueue<E> extends ArrayBlockingQueue<E> {
+
+    private int size;
+
+    public CircularQueue(int capacity) {
+        super(capacity);
+        this.size = capacity;
+    }
+
+    @Override
+    public boolean add(E e) {
+        // If FIFO queue is full, remove oldest element to make space for new one
+        if(super.size() == this.size){
+            this.remove();
+        }
+        return super.add(e);
+    }
+}
