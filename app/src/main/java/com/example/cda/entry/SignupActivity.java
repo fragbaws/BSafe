@@ -58,7 +58,7 @@ public class SignupActivity extends AppCompatActivity {
             SignUpMedicalFragment fragment = new SignUpMedicalFragment();
             fragment.setNewUser(newUser);
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.framelayout, new SignUpMedicalFragment());
+            transaction.replace(R.id.signup, new SignUpMedicalFragment());
             transaction.addToBackStack(null);
             transaction.commit();
         });

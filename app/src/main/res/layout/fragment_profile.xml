@@ -31,13 +31,14 @@
                     android:layout_height="110dp"
                     app:cardCornerRadius="55dp"
                     app:cardElevation="60dp">
+
                     <ImageView
                         android:id="@+id/profile_pic"
-                        android:layout_margin="6dp"
                         android:layout_width="100dp"
                         android:layout_height="100dp"
+                        android:layout_margin="6dp"
                         android:scaleType="centerInside"
-                        android:src="@drawable/profile_pic"/>
+                        android:src="@mipmap/ic_launcher" />
                 </androidx.cardview.widget.CardView>
                 <TextView
                     android:id="@+id/profile_name"

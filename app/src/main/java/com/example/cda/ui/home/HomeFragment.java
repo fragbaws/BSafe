@@ -231,7 +231,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 markerOptions.position(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()));
                 markerOptions.flat(true);
                 markerOptions.anchor(0.5f, 0.5f);
-                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.car_top_view));
+                //markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.car_top_view));
                 float bearing;
                 if (newLocation.hasBearing()) {
                     bearing = newLocation.getBearing();
@@ -328,6 +328,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         calculateRunningAverageThreadHandler = new Handler();
         calculateRateOfChangeThreadHandler = new Handler();
 
+
   /*      speedValues = new ArrayList<>();
         collectSpeedDataThreadHandler = new Handler();
         calculateSpeedDeviationThreadHandler = new Handler();*/
@@ -338,8 +339,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 if(monitorButton.getTag().equals("ready")) {
                     Log.v(TAG, "Activating crash detection algorithm...");
                     running = true;
-
                     setupWriters();
+
+
                     sensorWriter.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp", "Milliseconds"});
                     ssdWriter.writeNext(new String[]{"Standard Deviation", "Timestamp", "Milliseconds"});
 
@@ -617,7 +619,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 sensorWriter = new CSVWriter(new FileWriter(filePath));
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.v(TAG,e.getMessage());
         }
     }
 
