@@ -4,6 +4,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -45,6 +47,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -62,15 +65,17 @@ import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static android.os.Environment.getExternalStorageDirectory;
-import static com.example.cda.utils.Constant.AUTO_DISMISS_MILLIS;
-import static com.example.cda.utils.Constant.BUFFER_SIZE;
-import static com.example.cda.utils.Constant.CLOSE_ZOOM;
-import static com.example.cda.utils.Constant.COUNT_DOWN_INTERVAL_MILLIS;
-import static com.example.cda.utils.Constant.LOCATION_INTERVAL_SECS;
-import static com.example.cda.utils.Constant.MICROPHONE_INTERVAL_SECS;
-import static com.example.cda.utils.Constant.MS2KMH;
-import static com.example.cda.utils.Constant.SECS2MS;
-import static com.example.cda.utils.Constant.VEHICLE_SPEED_THRESHOLD;
+import static com.example.cda.utils.Constants.AUTO_DISMISS_MILLIS;
+import static com.example.cda.utils.Constants.BUFFER_SIZE;
+import static com.example.cda.utils.Constants.CAR_HEIGHT;
+import static com.example.cda.utils.Constants.CAR_WIDTH;
+import static com.example.cda.utils.Constants.CLOSE_ZOOM;
+import static com.example.cda.utils.Constants.COUNT_DOWN_INTERVAL_MILLIS;
+import static com.example.cda.utils.Constants.LOCATION_INTERVAL_SECS;
+import static com.example.cda.utils.Constants.MICROPHONE_INTERVAL_SECS;
+import static com.example.cda.utils.Constants.MS2KMH;
+import static com.example.cda.utils.Constants.SECS2MS;
+import static com.example.cda.utils.Constants.VEHICLE_SPEED_THRESHOLD;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback {
     
@@ -220,40 +225,41 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         public void onLocationResult(LocationResult locationResult) {
             super.onLocationResult(locationResult);
         if (locationResult.getLocations().size() > 0) {
-                oldLocation = newLocation;
-                newLocation = locationResult.getLastLocation();
-                Log.v(TAG, newLocation.toString());
+            oldLocation = newLocation;
+            newLocation = locationResult.getLastLocation();
+            Log.v(TAG, newLocation.toString());
 
-                if (marker != null) {
-                    marker.remove();
-                }
-                MarkerOptions markerOptions = new MarkerOptions();
-                markerOptions.position(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()));
-                markerOptions.flat(true);
-                markerOptions.anchor(0.5f, 0.5f);
-                //markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.car_top_view));
-                float bearing;
-                if (newLocation.hasBearing()) {
-                    bearing = newLocation.getBearing();
-                } else {
-                    bearing = 0;
-                }
-                markerOptions.rotation(bearing);
-                marker = googleMap.addMarker(markerOptions);
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
+            if (marker != null) {
+                marker.remove();
+            }
 
-                if(oldLocation != null) {
-                    //oldSpeed = speed;
-                    primaryData.setCurrentSpeed(calculator.calculateCurrentSpeed(oldLocation, newLocation));
-                }
-                if(running){
-                    if(primaryData.getCurrentSpeed() <= VEHICLE_SPEED_THRESHOLD) {
-                        speedTxt.setText("<24 km/h");
-                    }else{
-                        speedTxt.setText(String.format("%s km/h", (int) primaryData.getCurrentSpeed()));
-                    }
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()));
+            markerOptions.flat(true);
+            markerOptions.anchor(0.5f, 0.5f);
+            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.car_color));
+            float bearing;
+            if (newLocation.hasBearing()) {
+                bearing = newLocation.getBearing();
+            } else {
+                bearing = 0;
+            }
+            markerOptions.rotation(bearing);
+            marker = googleMap.addMarker(markerOptions);
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
+
+            if(oldLocation != null) {
+                //oldSpeed = speed;
+                primaryData.setCurrentSpeed(calculator.calculateCurrentSpeed(oldLocation, newLocation));
+            }
+            if(running){
+                if(primaryData.getCurrentSpeed() <= VEHICLE_SPEED_THRESHOLD) {
+                    speedTxt.setText("<24 km/h");
+                }else{
+                    speedTxt.setText(String.format("%s km/h", (int) primaryData.getCurrentSpeed()));
                 }
             }
+        }
         }
     };
 
@@ -340,7 +346,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     Log.v(TAG, "Activating crash detection algorithm...");
                     running = true;
                     setupWriters();
-
 
                     sensorWriter.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp", "Milliseconds"});
                     ssdWriter.writeNext(new String[]{"Standard Deviation", "Timestamp", "Milliseconds"});
@@ -473,9 +478,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         if(calculateSpeedDeviationThreadHandler.hasCallbacks(calculateSpeedDeviationThread)){
             calculateSpeedDeviationThreadHandler.removeCallbacks(collectSpeedDataThread);
         }*/
-        if (fusedLocationProviderClient != null) {
+        /*if (fusedLocationProviderClient != null) {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
-        }
+        }*/
         if(manager != null) {
             manager.unregisterListener(sensorListener);
         }
@@ -581,7 +586,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         locationRequest.setInterval((long) (LOCATION_INTERVAL_SECS*SECS2MS));
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
-        googleMap.setMyLocationEnabled(true);
+        //googleMap.setMyLocationEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(false);
         googleMap.setIndoorEnabled(false);
         googleMap.setTrafficEnabled(true);

@@ -1,6 +1,6 @@
 package com.example.cda.utils;
 
-public class Constant {
+public class Constants {
 
     /** Metric data **/
     public static final double MS2KMH = 3.6;
@@ -18,10 +18,12 @@ public class Constant {
 
     /* Alert Dialog */
     public static final int AUTO_DISMISS_MILLIS = 10000;
-    public static final int COUNT_DOWN_INTERVAL_MILLIS = 10000;
+    public static final int COUNT_DOWN_INTERVAL_MILLIS = 1000;
 
     /*Google Map*/
     public static final int CLOSE_ZOOM = 15;
+    public static final int CAR_WIDTH = 24;
+    public static final int CAR_HEIGHT = 24;
     
     /*Thresholds*/
     public static final int ACCIDENT_THRESHOLD = 1;

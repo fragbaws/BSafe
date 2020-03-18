@@ -29,7 +29,7 @@ public class Calculator {
         if (speed < 1 || Double.isNaN(speed) || Double.isInfinite(speed)) {
             speed = 0;
         }
-        return (speed*Constant.MS2KMH);
+        return (speed*Constants.MS2KMH);
     }
 
     public double calculateSpeedDeviation(ArrayList<Integer> speeds){
@@ -61,12 +61,12 @@ public class Calculator {
     }
 
     public double calculateGForce(double x, double y, double z){
-        return Math.sqrt(x*x + y*y + z*z)/(Constant.GRAVITY_CONSTANT);
+        return Math.sqrt(x*x + y*y + z*z)/(Constants.GRAVITY_CONSTANT);
 
     }
 
     public double calculateResultingRotation(float x, float y, float z, float prevTime, float currTime){
-        float dT = (currTime - prevTime) * Constant.NS2S;
+        float dT = (currTime - prevTime) * Constants.NS2S;
         float pitch = x;
         float roll = y;
         float yaw = z;
@@ -74,7 +74,7 @@ public class Calculator {
 
         // angular rotation in radians
         float theta = omegaMag * dT;
-        return theta * Constant.RAD2D;
+        return theta * Constants.RAD2D;
     }
 
     public double calculateRateOfChange(double prevVal, double currVal){
