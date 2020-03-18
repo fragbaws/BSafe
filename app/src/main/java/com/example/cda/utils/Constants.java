@@ -22,8 +22,7 @@ public class Constants {
 
     /*Google Map*/
     public static final int CLOSE_ZOOM = 15;
-    public static final int CAR_WIDTH = 24;
-    public static final int CAR_HEIGHT = 24;
+
     
     /*Thresholds*/
     public static final int ACCIDENT_THRESHOLD = 1;
@@ -32,6 +31,7 @@ public class Constants {
     public static final double STANDARD_DEVIATION_THRESHOLD = 2.06;
     public static final int SOUND_PRESSURE_LEVEL_THRESHOLD = 140;
     public static final int ROTATION_THRESHOLD = 45;
-    public static final int VEHICLE_SPEED_THRESHOLD = 24;
+    public static final int VEHICLE_FIRST_GEAR_SPEED_THRESHOLD = 24;
+    public static final double VEHICLE_EMERGENCY_DECELERATION_THRESHOLD = 7.5;
 
 }

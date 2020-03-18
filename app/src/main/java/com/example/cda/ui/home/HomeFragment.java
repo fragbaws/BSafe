@@ -4,8 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,6 +14,7 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -31,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
 import com.example.cda.MainActivity;
@@ -47,7 +47,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -58,34 +57,37 @@ import com.opencsv.CSVWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static android.os.Environment.getExternalStorageDirectory;
 import static com.example.cda.utils.Constants.AUTO_DISMISS_MILLIS;
 import static com.example.cda.utils.Constants.BUFFER_SIZE;
-import static com.example.cda.utils.Constants.CAR_HEIGHT;
-import static com.example.cda.utils.Constants.CAR_WIDTH;
 import static com.example.cda.utils.Constants.CLOSE_ZOOM;
 import static com.example.cda.utils.Constants.COUNT_DOWN_INTERVAL_MILLIS;
 import static com.example.cda.utils.Constants.LOCATION_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MICROPHONE_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MS2KMH;
 import static com.example.cda.utils.Constants.SECS2MS;
-import static com.example.cda.utils.Constants.VEHICLE_SPEED_THRESHOLD;
+import static com.example.cda.utils.Constants.VEHICLE_EMERGENCY_DECELERATION_THRESHOLD;
+import static com.example.cda.utils.Constants.VEHICLE_FIRST_GEAR_SPEED_THRESHOLD;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback {
     
-    private static final String TAG = "HOME";
+    private static final String HOME = "HOME";
     private static final String THREAD = "THREAD";
+    private static final String CDA = "CDA";
 
     private static final Calculator calculator = Calculator.getInstance();
     private PrimaryData primaryData;
 
-    private ArrayList<Double> bufferRotation;
+    private ArrayList<Double> bufferOmega;
     private ArrayList<Double> bufferGForce;
     private ArrayList<Double> bufferDecibel;
 
@@ -94,11 +96,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         @Override
         public void run() {
 
-            double averageRotation, averageGForce, averageDecibel;
-            if(!bufferRotation.isEmpty()){
-                averageRotation = calculator.calculateAverage(bufferRotation);
-                primaryData.getBufferRotation().add(averageRotation);
-                bufferRotation.clear();
+            double averageOmega, averageGForce, averageDecibel;
+            if(!bufferOmega.isEmpty()){
+                averageOmega = calculator.calculateAverage(bufferOmega);
+                primaryData.getBufferOmega().add(averageOmega);
+                bufferOmega.clear();
             }
 
             if(!bufferGForce.isEmpty()){
@@ -113,10 +115,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 bufferDecibel.clear();
             }
 
-            Log.v(THREAD, "Rotation" + primaryData.getBufferRotation());
+            Log.v(THREAD, "Omega" + primaryData.getBufferOmega());
             Log.v(THREAD, "GForce" + primaryData.getBufferGForce());
             Log.v(THREAD, "Decibels" + primaryData.getBufferDecibels());
             Log.v(THREAD, "Speed" + primaryData.getBufferSpeed());
+
 
             calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
         }
@@ -126,8 +129,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private Runnable calculateRateOfChangeThread = new Runnable() {
         @Override
         public void run() {
-            //double[] rotationPair = primaryData.getBufferRotation().getRecentPair(); Exists where resulting rotation is calculate (omega rad/s)
-            double[] gForcePair = null, decibelPair = null, speedPair = null;
+            double[] gForcePair = null, decibelPair = null, speedPair = null, omegaPair = null;
             if(primaryData.getBufferSpeed().size() >= 2) {
                 speedPair = primaryData.getBufferSpeed().getRecentPair();
             }
@@ -137,16 +139,20 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             if(primaryData.getBufferDecibels().size() >= 2) {
                 decibelPair = primaryData.getBufferDecibels().getRecentPair();
             }
+            if(primaryData.getBufferOmega().size() >=2){
+                omegaPair = primaryData.getBufferOmega().getRecentPair();
+            }
 
-            //double rotationROC, 
-            double jerk, decibelROC, speedROC;
-            /*if(rotationPair != null){
-                rotationROC = calculator.calculateRateOfChange(rotationPair[1], rotationPair[0], )
-            }*/
+
+            double jerk, decibelROC, Acceleration, angularAcceleration;
+            if(omegaPair != null){
+                angularAcceleration = calculator.calculateRateOfChange(omegaPair[1], omegaPair[0]);
+                primaryData.getBufferAngularAcceleration().add(angularAcceleration);
+            }
             
             if(gForcePair != null){
                 jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0]);
-                primaryData.getBufferGForceROC().add(jerk);
+                primaryData.getBufferGForceJerk().add(jerk);
             }
 
             if(decibelPair != null){
@@ -155,17 +161,78 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }
 
             if(speedPair != null){
-                speedROC = calculator.calculateRateOfChange(speedPair[1]/MS2KMH, speedPair[0]/MS2KMH); // converting to m/s as speed rate of change = acceleration
-                primaryData.getBufferSpeedROC().add(speedROC);
+                Acceleration = calculator.calculateRateOfChange(speedPair[1]/MS2KMH, speedPair[0]/MS2KMH); // converting to m/s as speed rate of change = acceleration
+                primaryData.getBufferAcceleration().add(Acceleration);
             }
 
-
-            //Log.v(THREAD, "Rotation ROC" + Arrays.toString(primaryData.getBufferRotation().getRecentPair()));
-            Log.v(THREAD, "GForce ROC" + primaryData.getBufferGForceROC());
+            //TODO
+            Log.v(THREAD, "Angular Acceleration" + primaryData.getBufferAngularAcceleration());
+            Log.v(THREAD, "Jerk (GForce)" + primaryData.getBufferGForceJerk());
             Log.v(THREAD, "Decibels ROC" + primaryData.getBufferDecibelROC());
-            Log.v(THREAD, "Speed ROC" + primaryData.getBufferSpeedROC());
+            Log.v(THREAD, "Acceleration" + primaryData.getBufferAcceleration());
 
             calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+        }
+    };
+
+    private Handler crashDetectionThreadHandler;
+    private Runnable crashDetectionThread = new Runnable() {
+        @RequiresApi(api = Build.VERSION_CODES.N)
+        @Override
+        public void run() {
+            Log.v(CDA, "Checking if crash occurred...");
+            boolean crash = false;
+            boolean speedEvent = false;
+
+            double currentSpeed = primaryData.getCurrentSpeed();
+            if(currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD){ // vehicle is idle / moving slowly
+                Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
+                OptionalDouble runningAverage = primaryData.getBufferSpeed()
+                                                    .stream()
+                                                    .mapToDouble(Double::doubleValue)
+                                                    .average();
+                if(runningAverage.isPresent()) {
+                    if (runningAverage.getAsDouble() > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
+                        Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
+                        Optional<Double> criticalDeceleration = primaryData.getBufferAcceleration()
+                                .stream()
+                                .filter(x -> x <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
+                                .findAny();
+                        if (criticalDeceleration.isPresent()) { // recent critical deceleration exists
+                            Log.v(CDA, "Vehicle experienced critical deceleration @ " + criticalDeceleration.get() + " m/s^2");
+                            speedEvent = true;
+                            crash = true;
+                        } else {
+                            Log.v(CDA, "Vehicle did not experience critical deceleration");
+                        }
+                    } else {
+                        Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage.getAsDouble() + " km/h");
+                    }
+                }else{
+                    Log.v(CDA, "Previous vehicle speeds not available.");
+                }
+            }else{
+                Log.v(CDA, "Vehicle still moving @ " + currentSpeed + " km/h");
+            }
+
+            if(dataWriter!=null){
+                dataWriter.writeNext(new String[]{
+                        String.valueOf(primaryData.getBufferOmega().recent()),
+                        String.valueOf(primaryData.getBufferAngularAcceleration().recent()),
+                        String.valueOf(primaryData.getBufferGForce().recent()),
+                        String.valueOf(primaryData.getBufferGForceJerk().recent()),
+                        String.valueOf(primaryData.getBufferSpeed().recent()),
+                        String.valueOf(primaryData.getBufferAcceleration().recent()),
+                        String.valueOf(primaryData.getBufferDecibels().recent()),
+                        String.valueOf(primaryData.getBufferDecibelROC().recent()),
+                        "N/A",
+                        String.valueOf(crash),
+                        DateFormat.getDateTimeInstance().format(new Date()),
+                        String.valueOf(System.currentTimeMillis())
+                });
+            }
+            crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+
         }
     };
 
@@ -180,39 +247,13 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private SensorManager manager;
     private float prevTimestamp;
 
-    /*private ArrayList<Integer> speedValues;
-    private double speedDeviation = 0; //speed standard deviation
-    private Handler collectSpeedDataThreadHandler;
-    private Runnable collectSpeedDataThread = new Runnable() {
-        public void run()
-        {
-            speedValues.add(primaryData.getCurrentSpeed());
-            ssdWriter.writeNext(new String[]{"-", "-", String.valueOf((System.currentTimeMillis()/SECS2MS)), primaryData.getCurrentSpeed() + "km/h"});
-            collectSpeedDataThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS)); // set same as location request interval
-        }
-    };
-    private Handler calculateSpeedDeviationThreadHandler;
-    private Runnable calculateSpeedDeviationThread = new Runnable() {
-        public void run()
-        {
-            speedDeviation = calculator.calculateSpeedDeviation(speedValues);
-            if(ssdWriter != null){
-                ssdWriter.writeNext(new String[]{String.valueOf(speedDeviation), DateFormat.getDateTimeInstance().format(new Date()), String.valueOf((System.currentTimeMillis()/SECS2MS))});
-                speedValues.clear();
-            }
-
-            calculateSpeedDeviationThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS*15)); // calculate speed deviation every 15 seconds
-        }
-    };*/
-
     private MediaRecorder recorder;
     private String audioName;
 
     private Button monitorButton;
     private TextView speedTxt;
     private TextView statusTxt;
-    private CSVWriter sensorWriter;
-    private CSVWriter ssdWriter;
+    private CSVWriter dataWriter;
 
     private String phoneNo, message;
 
@@ -227,7 +268,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         if (locationResult.getLocations().size() > 0) {
             oldLocation = newLocation;
             newLocation = locationResult.getLastLocation();
-            Log.v(TAG, newLocation.toString());
+            Log.v(HOME, newLocation.toString());
 
             if (marker != null) {
                 marker.remove();
@@ -249,11 +290,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
 
             if(oldLocation != null) {
-                //oldSpeed = speed;
                 primaryData.setCurrentSpeed(calculator.calculateCurrentSpeed(oldLocation, newLocation));
             }
             if(running){
-                if(primaryData.getCurrentSpeed() <= VEHICLE_SPEED_THRESHOLD) {
+                if(primaryData.getCurrentSpeed() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
                     speedTxt.setText("<24 km/h");
                 }else{
                     speedTxt.setText(String.format("%s km/h", (int) primaryData.getCurrentSpeed()));
@@ -272,40 +312,40 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }
             if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
                 if(prevTimestamp!=0) {
-                    primaryData.setCurrentRotation(calculator.calculateResultingRotation(event.values[0],
+                    primaryData.setCurrentOmega(calculator.calculateOmega(event.values[0],
                             event.values[1], event.values[2], prevTimestamp, event.timestamp));
-                    bufferRotation.add(primaryData.getCurrentRotation());
+                    bufferOmega.add(primaryData.getCurrentOmega());
 
                 }
                 prevTimestamp = event.timestamp;
             }
-            if(sensorWriter!= null){
+            if(dataWriter!= null){
                /* String triggeredEvent = "";
                 if(((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (primaryData.getCurrentSpeed()>=VEHICLE_SPEED_THRESHOLD)){ // travelling and hit
                     crash= true;
                     triggeredEvent = "1";
-                    Log.v(TAG, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                    Log.v(HOME, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
                             "\n Speed: " + primaryData.getCurrentSpeed() + "km/h" +
-                            "\n Rotation: " + primaryData.getCurrentRotation() + "°" +
+                            "\n Omega: " + primaryData.getCurrentOmega() + "°" +
                             "\n dB: " + primaryData.getCurrentDecibels() + "dB");
-                }else if(((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (primaryData.getCurrentRotation()>=ROTATION_THRESHOLD)) { // hit and vehicle overturned (rotation utilises pitch & roll)
+                }else if(((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (primaryData.getCurrentOmega()>=Omega_THRESHOLD)) { // hit and vehicle overturned (Omega utilises pitch & roll)
                     crash = true;
                     triggeredEvent = "2";
-                    Log.v(TAG, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                    Log.v(HOME, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
                             "\n Speed: " + primaryData.getCurrentSpeed() + "km/h" +
-                            "\n Rotation: " + primaryData.getCurrentRotation() + "°" +
+                            "\n Omega: " + primaryData.getCurrentOmega() + "°" +
                             "\n dB: " + primaryData.getCurrentDecibels() + "dB");
                 }else if( (primaryData.getCurrentSpeed() < VEHICLE_SPEED_THRESHOLD) && (((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD) + (speedDeviation/STANDARD_DEVIATION_THRESHOLD)) >= LOW_SPEED_ACCIDENT_THRESHOLD)){ // hit while slowly moving
                     crash = true;
                     triggeredEvent = "3";
-                    Log.v(TAG, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
+                    Log.v(HOME, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
                             "\n Speed: " + primaryData.getCurrentSpeed() + "km/h" +
-                            "\n Rotation: " + primaryData.getCurrentRotation() + "°" +
+                            "\n Omega: " + primaryData.getCurrentOmega() + "°" +
                             "\n dB: " + primaryData.getCurrentDecibels() + "dB");
                 }else{
                     crash = false;
                 }
-                sensorWriter.writeNext(new String[]{String.valueOf(primaryData.getCurrentRotation()), String.valueOf(primaryData.getCurrentGForce()), String.valueOf(primaryData.getCurrentSpeed()), String.valueOf(primaryData.getCurrentDecibels()), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date()), String.valueOf(System.currentTimeMillis()/SECS2MS)});
+                dataWriter.writeNext(new String[]{String.valueOf(primaryData.getCurrentOmega()), String.valueOf(primaryData.getCurrentGForce()), String.valueOf(primaryData.getCurrentSpeed()), String.valueOf(primaryData.getCurrentDecibels()), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date()), String.valueOf(System.currentTimeMillis()/SECS2MS)});
                 */if(crash){
                     SOS();
                 }
@@ -330,36 +370,41 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         primaryData = new PrimaryData(BUFFER_SIZE);
         bufferDecibel = new ArrayList<>();
         bufferGForce = new ArrayList<>();
-        bufferRotation = new ArrayList<>();
+        bufferOmega = new ArrayList<>();
         calculateRunningAverageThreadHandler = new Handler();
         calculateRateOfChangeThreadHandler = new Handler();
-
-
-  /*      speedValues = new ArrayList<>();
-        collectSpeedDataThreadHandler = new Handler();
-        calculateSpeedDeviationThreadHandler = new Handler();*/
-
-
+        crashDetectionThreadHandler = new Handler();
+        
         monitorButton.setOnClickListener(v -> {
             if(v.getId() == monitorButton.getId()){
                 if(monitorButton.getTag().equals("ready")) {
-                    Log.v(TAG, "Activating crash detection algorithm...");
+                    Log.v(HOME, "Activating crash detection algorithm...");
                     running = true;
                     setupWriters();
 
-                    sensorWriter.writeNext(new String[]{"Rotation", "G-Force", "Speed", "dB", "Crash", "Case", "Timestamp", "Milliseconds"});
-                    ssdWriter.writeNext(new String[]{"Standard Deviation", "Timestamp", "Milliseconds"});
+                    dataWriter.writeNext(new String[]{
+                            "Omega",
+                            "Angular Acceleration",
+                            "G-Force",
+                            "Jerk",
+                            "Speed",
+                            "Acceleration",
+                            "dB",
+                            "dB Delta",
+                            "Crash",
+                            "Case",
+                            "Timestamp",
+                            "Milliseconds"
+                    });
 
                     manager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
                     startRecording();
-                    calculateRateOfChangeThreadHandler.postDelayed(calculateRateOfChangeThread, (long) (LOCATION_INTERVAL_SECS*SECS2MS*2));
                     calculateRunningAverageThreadHandler.postDelayed(calculateRunningAverageThread, 0);
+                    crashDetectionThreadHandler.postDelayed(crashDetectionThread, 0);
+                    calculateRateOfChangeThreadHandler.postDelayed(calculateRateOfChangeThread, (long) (LOCATION_INTERVAL_SECS*SECS2MS*2)); //TODO TimeUnit.SECONDS.toMilis()
 
-/*                    Log.v(TAG, "Activating threads for speed standard deviation calculations...");
-                    collectSpeedDataThreadHandler.postDelayed(collectSpeedDataThread, 0);
-                    calculateSpeedDeviationThreadHandler.postDelayed(calculateSpeedDeviationThread, 30000);*/
                     monitorButton.setText("Stop Monitoring");
                     statusTxt.setText("Normal");
                     speedTxt.setText("0 km/h");
@@ -388,7 +433,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         try {
             recorder.prepare();
         } catch (IOException e) {
-            Log.v(TAG, "Recording failed");
+            Log.v(HOME, "Recording failed");
         }
 
         recorder.start();
@@ -435,14 +480,18 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     public void onResume() {
         super.onResume();
         isLocationServiceEnabled();
-        mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        } else {
-            Log.v(TAG, "Could not load map fragment");
+        if(fusedLocationProviderClient != null){
+            requestLocation();
+        }else {
+            mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+            if (mapFragment != null) {
+                mapFragment.getMapAsync(this);
+            } else {
+                Log.v(HOME, "Could not load map fragment");
+            }
         }
-        if(ssdWriter == null || sensorWriter == null) {
+        if(dataWriter == null) {
             setupWriters();
         }
     }
@@ -450,6 +499,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onPause() {
         super.onPause();
+        if (fusedLocationProviderClient != null) {
+            fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+        }
         stop();
     }
 
@@ -466,21 +518,13 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         if(calculateRateOfChangeThreadHandler.hasCallbacks(calculateRateOfChangeThread)){
             calculateRateOfChangeThreadHandler.removeCallbacks(calculateRateOfChangeThread);
         }
+        if(crashDetectionThreadHandler.hasCallbacks(crashDetectionThread)){
+            crashDetectionThreadHandler.removeCallbacks(crashDetectionThread);
+        }
         if(primaryData != null){
             primaryData.clearBuffers();
         }
-        /*if(speedValues != null) {
-            speedValues.clear();
-        }
-        if(collectSpeedDataThreadHandler.hasCallbacks(collectSpeedDataThread)){
-            collectSpeedDataThreadHandler.removeCallbacks(collectSpeedDataThread);
-        }
-        if(calculateSpeedDeviationThreadHandler.hasCallbacks(calculateSpeedDeviationThread)){
-            calculateSpeedDeviationThreadHandler.removeCallbacks(collectSpeedDataThread);
-        }*/
-        /*if (fusedLocationProviderClient != null) {
-            fusedLocationProviderClient.removeLocationUpdates(locationCallback);
-        }*/
+        /**/
         if(manager != null) {
             manager.unregisterListener(sensorListener);
         }
@@ -490,11 +534,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             recorder = null;
         }
         try {
-            if(sensorWriter != null) {
-                sensorWriter.close();
-            }
-            if(ssdWriter != null){
-                ssdWriter.close();
+            if(dataWriter != null) {
+                dataWriter.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -503,7 +544,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private void SOS(){
         stop();
-        Log.v(TAG, "Crash detected");
+        Log.v(HOME, "Crash detected");
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         MediaPlayer mp = MediaPlayer.create(getContext(), notification);
         mp.start();
@@ -532,7 +573,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     @Override
                     public void onFinish() {
                         if (((AlertDialog) dialog).isShowing()) {
-                            Log.v(TAG, "User did not respond to alert, sending message to emergency contact.");
+                            Log.v(HOME, "User did not respond to alert, sending message to emergency contact.");
                             sendAlert();
                             mp.stop();
                             dialog.dismiss();
@@ -547,7 +588,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private void sendAlert(){
         User user = ((MainActivity)this.getActivity()).getUser();
         phoneNo = user.getEmergency();
-        Log.v(TAG, "Building message for emergency contact: " + phoneNo);
+        Log.v(HOME, "Building message for emergency contact: " + phoneNo);
         message = "This is an automated message from BSafe to alert that " + user.getFirstName() +" " + user.getSurname() +
                         " just experienced a vehicle crash. Please send an emergency response unit to (" + newLocation.getLatitude() +", " + newLocation.getLongitude()+") " +
                         "now and pass them these details about " + user.getFirstName() +": " + "\n" +
@@ -563,7 +604,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         "G-Force experienced: " + primaryData.getCurrentGForce() + "\n\n" +
                         "You received this message because " + user.getFirstName() + " has listed you as an emergency contact in BSafe.";
 
-            Log.v(TAG, "Sending message to " + phoneNo);
+            Log.v(HOME, "Sending message to " + phoneNo);
             SmsManager smsManager = SmsManager.getDefault();
             ArrayList<String> parts = smsManager.divideMessage(message);
 
@@ -576,7 +617,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         if (googleMap != null) {
             this.googleMap = googleMap;
             this.googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getActivity(), R.raw.style_json));
-            Log.v(TAG, "Initiating location request..");
+            Log.v(HOME, "Initiating location request..");
             requestLocation();
         }
     }
@@ -598,34 +639,20 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         String baseDir = getExternalStorageDirectory().getAbsolutePath();
         String fileName = "crash_data.csv";
         String filePath = baseDir + File.separator + fileName;
-        Log.v(TAG, "Writing to " + filePath);
+        Log.v(HOME, "Writing to " + filePath);
         File f = new File(filePath);
         FileWriter mFileWriter;
 
-        String ssdname = "ssd.csv";
-        String ssdPath = baseDir + File.separator + ssdname;
-        Log.v(TAG, "Writing to " + ssdPath);
-        File fssd = new File(ssdPath);
-        FileWriter ssdFileWriter;
-
         // File exist
         try {
-            if(fssd.exists() && !fssd.isDirectory()){
-                ssdFileWriter = new FileWriter(ssdPath, true);
-                ssdWriter = new CSVWriter(ssdFileWriter);
-            }else{
-                ssdWriter = new CSVWriter(new FileWriter(ssdPath));
-            }
-
             if (f.exists() && !f.isDirectory()) {
                 mFileWriter = new FileWriter(filePath, true);
-                sensorWriter = new CSVWriter(mFileWriter);
+                dataWriter = new CSVWriter(mFileWriter);
             } else {
-                sensorWriter = new CSVWriter(new FileWriter(filePath));
+                dataWriter = new CSVWriter(new FileWriter(filePath));
             }
         } catch (IOException e) {
-            Log.v(TAG,e.getMessage());
+            Log.v(HOME,e.getMessage());
         }
     }
-
 }

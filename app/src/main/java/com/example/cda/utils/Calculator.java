@@ -2,7 +2,6 @@ package com.example.cda.utils;
 
 import android.location.Location;
 import android.media.MediaRecorder;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,16 +64,14 @@ public class Calculator {
 
     }
 
-    public double calculateResultingRotation(float x, float y, float z, float prevTime, float currTime){
-        float dT = (currTime - prevTime) * Constants.NS2S;
+    public double calculateOmega(float x, float y, float z, float prevTime, float currTime){
+        //float dT = (currTime - prevTime) * Constants.NS2S;
         float pitch = x;
         float roll = y;
         float yaw = z;
-        float omegaMag = (float) Math.sqrt(pitch*pitch + roll*roll); // d0/dt
+        double omegaMag = Math.sqrt(pitch*pitch + roll*roll + yaw*yaw); // d0/dt
 
-        // angular rotation in radians
-        float theta = omegaMag * dT;
-        return theta * Constants.RAD2D;
+        return omegaMag;
     }
 
     public double calculateRateOfChange(double prevVal, double currVal){

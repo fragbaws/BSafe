@@ -7,7 +7,7 @@ public class PrimaryData {
     private SecondaryData secondaryData;
     private double currentSpeed;
     private double currentGForce;
-    private double currentRotation;
+    private double currentOmega;
     private double currentDecibels;
 
     public PrimaryData(int capacity){
@@ -25,11 +25,11 @@ public class PrimaryData {
 
     public void setCurrentGForce(double currentGForce) { this.currentGForce = currentGForce; }
 
-    public double getCurrentRotation() {
-        return currentRotation;
+    public double getCurrentOmega() {
+        return currentOmega;
     }
 
-    public void setCurrentRotation(double currentRotation) { this.currentRotation = currentRotation; }
+    public void setCurrentOmega(double currentOmega) { this.currentOmega = currentOmega; }
 
     public double getCurrentDecibels() {
         return currentDecibels;
@@ -41,8 +41,8 @@ public class PrimaryData {
         return secondaryData.getBufferGForce();
     }
 
-    public CircularQueue<Double> getBufferRotation() {
-        return secondaryData.getBufferRotation();
+    public CircularQueue<Double> getBufferOmega() {
+        return secondaryData.getBufferOmega();
     }
 
     public CircularQueue<Double> getBufferDecibels() {
@@ -53,31 +53,31 @@ public class PrimaryData {
         return secondaryData.getBufferSpeed();
     }
 
-    public CircularQueue<Double> getBufferGForceROC() {
-        return secondaryData.getBufferGForceROC();
+    public CircularQueue<Double> getBufferGForceJerk() {
+        return secondaryData.getBufferGForceJerk();
     }
 
-    public CircularQueue<Double> getBufferRotationROC() {
-        return secondaryData.getBufferRotationROC();
+    public CircularQueue<Double> getBufferAngularAcceleration() {
+        return secondaryData.getBufferAngularAcceleration();
     }
 
     public CircularQueue<Double> getBufferDecibelROC() {
         return secondaryData.getBufferDecibelROC();
     }
 
-    public CircularQueue<Double> getBufferSpeedROC(){
-        return secondaryData.getBufferSpeedROC();
+    public CircularQueue<Double> getBufferAcceleration(){
+        return secondaryData.getBufferAcceleration();
     }
 
     public void clearBuffers(){
-        getBufferSpeedROC().clear();
+        getBufferAcceleration().clear();
         getBufferSpeed().clear();
         getBufferDecibelROC().clear();
-        getBufferGForceROC().clear();
+        getBufferGForceJerk().clear();
         getBufferGForce().clear();
         getBufferDecibels().clear();
-        getBufferRotation().clear();
-        getBufferRotationROC().clear();
+        getBufferOmega().clear();
+        getBufferAngularAcceleration().clear();
     }
 
 }
