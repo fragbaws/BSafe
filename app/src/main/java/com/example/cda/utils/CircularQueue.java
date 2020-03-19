@@ -1,8 +1,9 @@
 package com.example.cda.utils;
 
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.ArrayDeque;
+import java.util.Iterator;
 
-public class CircularQueue<E> extends ArrayBlockingQueue<E> {
+public class CircularQueue<E> extends ArrayDeque<E> {
 
     private int size;
 
@@ -15,29 +16,39 @@ public class CircularQueue<E> extends ArrayBlockingQueue<E> {
     public boolean add(E e) {
         // If FIFO queue is full, remove oldest element to make space for new one
         if(super.size() == this.size){
-            this.remove();
+            this.removeLast();
         }
-        return super.add(e);
+
+        super.addFirst(e);
+        return true;
     }
 
     public double[] getRecentPair(){
-        return new double[]{(double) this.toArray()[this.size()-1], (double) this.toArray()[this.size()-2]};
+        return new double[]{(double) this.toArray()[0], (double) this.toArray()[1]};
     }
 
-    public double recent(){
+    public E recent(){
+        return super.getFirst();
+    }
+
+    public double previous(){
         if(this.size() == 0){
             return 0;
         }
-        return (double) this.toArray()[this.size() - 1];
+        return (double) this.toArray()[this.size() - 2];
     }
 
-    public int indexOf(E e){
-        E[] tmp = (E[]) this.toArray();
-        for(int i =0;i<this.size();i++){
-            if(tmp[i] == e){
-                return i;
+
+    public int indexOf(double e){
+        Iterator it = this.iterator();
+        int index = 0;
+        while(it.hasNext()){
+            if(it.next().equals(e)){
+                return index;
             }
+            index++;
         }
+
         return Integer.MAX_VALUE;
     }
 
@@ -52,12 +63,16 @@ public class CircularQueue<E> extends ArrayBlockingQueue<E> {
             return (Math.max(curr, prev));
         }
 
+        if(index == 0){
+            double curr = (double) this.toArray()[index];
+            double next = (double) this.toArray()[index+1];
+            return (Math.max(curr,next));
+        }
+
         double curr = (double) this.toArray()[index];
         double prev = (double) this.toArray()[index - 1];
         double next = (double) this.toArray()[index + 1];
 
         return Math.max(prev, Math.max(curr, next));
-
-
     }
 }

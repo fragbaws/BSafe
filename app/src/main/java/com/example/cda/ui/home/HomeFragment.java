@@ -61,7 +61,6 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.concurrent.TimeUnit;
 
@@ -172,73 +171,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             Log.v(THREAD, "Decibels ROC" + primaryData.getBufferDecibelROC());
             Log.v(THREAD, "Acceleration" + primaryData.getBufferAcceleration());
 
-            calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
-        }
-    };
-
-    private Handler crashDetectionThreadHandler;
-    private Runnable crashDetectionThread = new Runnable() {
-        @RequiresApi(api = Build.VERSION_CODES.N)
-        @Override
-        public void run() {
-            Log.v(CDA, "Checking if crash occurred...");
-            boolean speedEvent = false, gForceEvent = false;
-
-            int criticalDecelerationIndex = Integer.MAX_VALUE;
-            double currentSpeed = primaryData.getCurrentSpeed();
-            Log.v(CDA, "Analysing speed parameter");
-            if(currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD){ // vehicle is idle / moving slowly
-                Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
-                OptionalDouble runningAverage = primaryData.getBufferSpeed()
-                                                    .stream()
-                                                    .mapToDouble(Double::doubleValue)
-                                                    .average();
-                if(runningAverage.isPresent()) {
-                    if (runningAverage.getAsDouble() > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
-                        Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
-                        Optional<Double> criticalDeceleration = primaryData.getBufferAcceleration()
-                                .stream()
-                                .filter(x -> x <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
-                                .findAny();
-                        if (criticalDeceleration.isPresent()) { // recent critical deceleration exists
-                            Log.v(CDA, "Vehicle experienced critical deceleration @ " + criticalDeceleration.get() + " m/s^2");
-                            speedEvent = true;
-                            criticalDecelerationIndex = primaryData.getBufferAcceleration().indexOf(criticalDeceleration.get());
-                        } else {
-                            Log.v(CDA, "Vehicle did not experience critical deceleration");
-                        }
-                    } else {
-                        Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage.getAsDouble() + " km/h");
-                    }
-                }else{
-                    Log.v(CDA, "Previous vehicle speeds not available.");
-                }
-            }else{
-                Log.v(CDA, "Vehicle still moving @ " + currentSpeed + " km/h");
-            }
-
-            Log.v(CDA, "Analysing g-force parameter"); // used to confirm the critical deceleration
-            if(criticalDecelerationIndex != Integer.MAX_VALUE){
-                Log.v(CDA, "Checking g-force during critical deceleration");
-                double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(criticalDecelerationIndex);
-                Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration +
-                        " G during critical deceleration " +
-                        (primaryData.getBufferGForce().size()-criticalDecelerationIndex) +
-                        " seconds ago");
-                if(gForceDuringDeceleration >= G_FORCE_THRESHOLD){
-                    Log.v(CDA, "Deceleration confirmed by g-force");
-                    gForceEvent = true;
-                }else{
-                    Log.v(CDA, "Vehicle did not experience critical g-force");
-                }
-            }else{
-                Log.v(CDA, "Critical deceleration did not occur");
-            }
-
-            if(speedEvent && gForceEvent){
-                crash = true;
-            }
-
             if(dataWriter!=null){
                 dataWriter.writeNext(new String[]{
                         String.valueOf(primaryData.getBufferOmega().recent()),
@@ -255,6 +187,105 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         String.valueOf(System.currentTimeMillis())
                 });
             }
+
+            calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+        }
+    };
+
+    private Handler crashDetectionThreadHandler;
+    // Does not work if critical deceleration occurs with the vehicle not dropping under 24 kmh
+    private Runnable crashDetectionThread = new Runnable() {
+        @RequiresApi(api = Build.VERSION_CODES.N)
+        @Override
+        public void run() {
+            Log.v(CDA, "Checking if crash occurred...");
+            boolean speedEvent = false, gForceEvent = false;
+
+            int criticalDecelerationIndex = Integer.MAX_VALUE;
+            double currentSpeed = primaryData.getCurrentSpeed();
+            Log.v(CDA, "Analysing speed parameter");
+            if(currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD){ // vehicle is idle / moving slowly
+                Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
+                OptionalDouble runningAverageOptional = primaryData.getBufferSpeed()
+                                                    .stream()
+                                                    .mapToDouble(Double::doubleValue)
+                                                    .average();
+                /*double runningAverage = primaryData.getBufferSpeed().previous();
+                if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
+                    Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
+
+                    double deceleration = (currentSpeed/MS2KMH - runningAverage/MS2KMH);
+                    Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
+                    Log.v(CDA, "Acceleration: " + primaryData.getBufferAcceleration());
+                    Log.v(CDA, "Deceleration: " + deceleration);
+                    if (deceleration <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD) { // recent critical deceleration exists
+                        Log.v(CDA, "Vehicle experienced critical deceleration @ " + deceleration + " m/s^2");
+                        speedEvent = true;
+                        criticalDecelerationIndex = primaryData.getBufferAcceleration().indexOf(deceleration);
+                        Log.v(CDA, "Critical Deceleration Index: " + criticalDecelerationIndex);
+
+                    } else {
+                        Log.v(CDA, "Vehicle did not experience critical deceleration");
+                    }
+                } else {
+                    Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage + " km/h");
+                }*/
+                if(runningAverageOptional.isPresent()) {
+                    double runningAverage = runningAverageOptional.getAsDouble();
+                    if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
+                        Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
+
+                        OptionalDouble decelerationOptional = primaryData.getBufferAcceleration()
+                                .stream()
+                                .mapToDouble(Double::doubleValue)
+                                .filter(x -> x <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
+                                .findFirst();
+                        double deceleration = (decelerationOptional.isPresent() ? decelerationOptional.getAsDouble(): Double.NaN);
+                        Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
+                        Log.v(CDA, "Acceleration: " + primaryData.getBufferAcceleration());
+                        Log.v(CDA, "Deceleration: " + deceleration);
+
+                        if (!Double.isNaN(deceleration)) { // recent critical deceleration exists
+                            Log.v(CDA, "Vehicle experienced critical deceleration @ " + deceleration + " m/s^2");
+                            speedEvent = true;
+                            criticalDecelerationIndex = primaryData.getBufferAcceleration().indexOf(deceleration);
+                            Log.v(CDA, "Critical Deceleration Index: " + criticalDecelerationIndex);
+                        } else {
+                            Log.v(CDA, "Vehicle did not experience critical deceleration");
+                        }
+                    } else {
+                        Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage + " km/h");
+                    }
+                }else{
+                    Log.v(CDA, "Previous vehicle speeds not available.");
+                }
+            }else{
+                Log.v(CDA, "Vehicle still moving @ " + currentSpeed + " km/h");
+            }
+
+            Log.v(CDA, "Analysing g-force parameter"); // used to confirm the critical deceleration
+            if(criticalDecelerationIndex != Integer.MAX_VALUE){
+                Log.v(CDA, "Checking g-force during critical deceleration");
+                double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(criticalDecelerationIndex);
+                Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration +
+                        " G during critical deceleration " +
+                        (criticalDecelerationIndex+1) +
+                        " seconds ago");
+                if(gForceDuringDeceleration >= G_FORCE_THRESHOLD){
+                    Log.v(CDA, "Deceleration confirmed by g-force");
+                    gForceEvent = true;
+                }else{
+                    Log.v(CDA, "Vehicle did not experience critical g-force");
+                }
+            }else{
+                Log.v(CDA, "Critical deceleration did not occur");
+            }
+
+            if(speedEvent && gForceEvent){
+                crash = true;
+            }
+
+
 
             if(crash){
                 SOS();
@@ -431,7 +462,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
                     startRecording();
                     calculateRunningAverageThreadHandler.postDelayed(calculateRunningAverageThread, 0);
-                    crashDetectionThreadHandler.postDelayed(crashDetectionThread, 0);
+                    crashDetectionThreadHandler.postDelayed(crashDetectionThread, (long) (LOCATION_INTERVAL_SECS*SECS2MS)); // does not have access to the most up to date ROC values therefore delay is added
                     calculateRateOfChangeThreadHandler.postDelayed(calculateRateOfChangeThread, (long) (LOCATION_INTERVAL_SECS*SECS2MS*2)); //TODO TimeUnit.SECONDS.toMilis()
 
                     monitorButton.setText("Stop Monitoring");
