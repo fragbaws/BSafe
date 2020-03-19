@@ -38,6 +38,7 @@ import com.example.cda.R;
 import com.example.cda.data.PrimaryData;
 import com.example.cda.entry.User;
 import com.example.cda.utils.Calculator;
+import com.example.cda.utils.Constants;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -81,8 +82,10 @@ import static com.example.cda.utils.Constants.VEHICLE_FIRST_GEAR_SPEED_THRESHOLD
 public class HomeFragment extends Fragment implements OnMapReadyCallback {
     
     private static final String HOME = "HOME";
-    private static final String THREAD = "THREAD";
+    private static final String PRIMARY_DATA = "PRIMARY_DATA";
+    private static final String SECONDARY_DATA = "SECONDARY_DATA";
     private static final String CDA = "CDA";
+    private static final String SPEED = "SPEED";
 
     private static final Calculator calculator = Calculator.getInstance();
     private PrimaryData primaryData;
@@ -90,6 +93,30 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private ArrayList<Double> bufferOmega;
     private ArrayList<Double> bufferGForce;
     private ArrayList<Double> bufferDecibel;
+
+    private SupportMapFragment mapFragment;
+    private GoogleMap googleMap;
+    private LocationRequest locationRequest;
+    private FusedLocationProviderClient fusedLocationProviderClient;
+    private Marker marker;
+    private Location oldLocation;
+    private Location newLocation;
+
+    private SensorManager manager;
+    private float prevTimestamp;
+
+    private MediaRecorder recorder;
+    private String audioName;
+
+    private Button monitorButton;
+    private TextView speedTxt;
+    private TextView statusTxt;
+    private CSVWriter dataWriter;
+
+    private String phoneNo, message;
+
+    private boolean running = false;
+    private boolean crash = false;
 
     private Handler calculateRunningAverageThreadHandler;
     private Runnable calculateRunningAverageThread = new Runnable() {
@@ -115,10 +142,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 bufferDecibel.clear();
             }
 
-            Log.v(THREAD, "Omega" + primaryData.getBufferOmega());
-            Log.v(THREAD, "GForce" + primaryData.getBufferGForce());
-            Log.v(THREAD, "Decibels" + primaryData.getBufferDecibels());
-            Log.v(THREAD, "Speed" + primaryData.getBufferSpeed());
+            Log.v(PRIMARY_DATA, "Omega" + primaryData.getBufferOmega());
+            Log.v(PRIMARY_DATA, "GForce" + primaryData.getBufferGForce());
+            Log.v(PRIMARY_DATA, "Decibels" + primaryData.getBufferDecibels());
+            Log.v(PRIMARY_DATA, "Speed" + primaryData.getBufferSpeed());
 
 
             calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
@@ -129,10 +156,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private Runnable calculateRateOfChangeThread = new Runnable() {
         @Override
         public void run() {
-            double[] gForcePair = null, decibelPair = null, speedPair = null, omegaPair = null;
-            if(primaryData.getBufferSpeed().size() >= 2) {
-                speedPair = primaryData.getBufferSpeed().getRecentPair();
-            }
+            double[] gForcePair = null, decibelPair = null, omegaPair = null;
+
             if(primaryData.getBufferGForce().size() >= 2) {
                 gForcePair = primaryData.getBufferGForce().getRecentPair();
             }
@@ -144,32 +169,27 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }
 
 
-            double jerk, decibelROC, Acceleration, angularAcceleration;
+            double jerk, decibelROC, angularAcceleration;
             if(omegaPair != null){
-                angularAcceleration = calculator.calculateRateOfChange(omegaPair[1], omegaPair[0]);
+                angularAcceleration = calculator.calculateRateOfChange(omegaPair[1], omegaPair[0], 1);
                 primaryData.getBufferAngularAcceleration().add(angularAcceleration);
             }
             
             if(gForcePair != null){
-                jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0]);
+                jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0], 1);
                 primaryData.getBufferGForceJerk().add(jerk);
             }
 
             if(decibelPair != null){
-                decibelROC = calculator.calculateRateOfChange(decibelPair[1], decibelPair[0]);
+                decibelROC = calculator.calculateRateOfChange(decibelPair[1], decibelPair[0], 1);
                 primaryData.getBufferDecibelROC().add(decibelROC);
             }
 
-            if(speedPair != null){
-                Acceleration = calculator.calculateRateOfChange(speedPair[1]/MS2KMH, speedPair[0]/MS2KMH); // converting to m/s as speed rate of change = acceleration
-                primaryData.getBufferAcceleration().add(Acceleration);
-            }
 
-            //TODO
-            Log.v(THREAD, "Angular Acceleration" + primaryData.getBufferAngularAcceleration());
-            Log.v(THREAD, "Jerk (GForce)" + primaryData.getBufferGForceJerk());
-            Log.v(THREAD, "Decibels ROC" + primaryData.getBufferDecibelROC());
-            Log.v(THREAD, "Acceleration" + primaryData.getBufferAcceleration());
+            Log.v(SECONDARY_DATA, "Angular Acceleration" + primaryData.getBufferAngularAcceleration());
+            Log.v(SECONDARY_DATA, "Jerk (GForce)" + primaryData.getBufferGForceJerk());
+            Log.v(SECONDARY_DATA, "Decibels ROC" + primaryData.getBufferDecibelROC());
+            Log.v(SECONDARY_DATA, "Acceleration" + primaryData.getBufferAcceleration());
 
             if(dataWriter!=null){
                 dataWriter.writeNext(new String[]{
@@ -193,7 +213,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     };
 
     private Handler crashDetectionThreadHandler;
-    // Does not work if critical deceleration occurs with the vehicle not dropping under 24 kmh
     private Runnable crashDetectionThread = new Runnable() {
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
@@ -243,7 +262,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         double deceleration = (decelerationOptional.isPresent() ? decelerationOptional.getAsDouble(): Double.NaN);
                         Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
                         Log.v(CDA, "Acceleration: " + primaryData.getBufferAcceleration());
-                        Log.v(CDA, "Deceleration: " + deceleration);
 
                         if (!Double.isNaN(deceleration)) { // recent critical deceleration exists
                             Log.v(CDA, "Vehicle experienced critical deceleration @ " + deceleration + " m/s^2");
@@ -267,10 +285,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             if(criticalDecelerationIndex != Integer.MAX_VALUE){
                 Log.v(CDA, "Checking g-force during critical deceleration");
                 double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(criticalDecelerationIndex);
-                Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration +
-                        " G during critical deceleration " +
-                        (criticalDecelerationIndex+1) +
-                        " seconds ago");
+                Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration + " G during critical deceleration ");
                 if(gForceDuringDeceleration >= G_FORCE_THRESHOLD){
                     Log.v(CDA, "Deceleration confirmed by g-force");
                     gForceEvent = true;
@@ -286,7 +301,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }
 
 
-
             if(crash){
                 SOS();
             }
@@ -295,31 +309,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
         }
     };
-
-    private SupportMapFragment mapFragment;
-    private GoogleMap googleMap;
-    private LocationRequest locationRequest;
-    private FusedLocationProviderClient fusedLocationProviderClient;
-    private Marker marker;
-    private Location oldLocation;
-    private Location newLocation;
-
-    private SensorManager manager;
-    private float prevTimestamp;
-
-    private MediaRecorder recorder;
-    private String audioName;
-
-    private Button monitorButton;
-    private TextView speedTxt;
-    private TextView statusTxt;
-    private CSVWriter dataWriter;
-
-    private String phoneNo, message;
-
-    private boolean running = false;
-    private boolean crash = false;
-
 
     private LocationCallback locationCallback = new LocationCallback() {
         @Override
@@ -349,14 +338,29 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             marker = googleMap.addMarker(markerOptions);
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
 
-            if(oldLocation != null) {
-                primaryData.setCurrentSpeed(calculator.calculateCurrentSpeed(oldLocation, newLocation));
-            }
-            if(running){
-                if(primaryData.getCurrentSpeed() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
-                    speedTxt.setText("<24 km/h");
-                }else{
-                    speedTxt.setText(String.format("%s km/h", (int) primaryData.getCurrentSpeed()));
+            if(oldLocation != null) { // More than one location is available
+
+                if(running) {
+                    double delayBetweenLocations = (float) ((newLocation.getTime() - oldLocation.getTime()) / Constants.SECS2MS);
+                    double currentSpeed = calculator.calculateCurrentSpeed(oldLocation, newLocation);
+                    Log.v(SPEED, "Calculating speed between locations");
+                    primaryData.setCurrentSpeed(currentSpeed); // calculate speed between locations
+                    Log.v(SPEED, "Current speed: " + currentSpeed + " km/h");
+                    Log.v(SPEED, "Delay between locations: " + delayBetweenLocations + "s");
+
+                    if (primaryData.getBufferSpeed().size() >= 2) { // calculate acceleration between locations
+                        Log.v(SPEED, "Calculating acceleration between locations");
+                        double[] speedPair = primaryData.getBufferSpeed().getRecentPair();
+                        double acceleration = calculator.calculateRateOfChange(speedPair[1], speedPair[0], delayBetweenLocations);
+                        primaryData.getBufferAcceleration().add(acceleration);
+                        Log.v(SPEED, "Acceleration between locations: " + acceleration + " m/s^2");
+                    }
+
+                    if(primaryData.getCurrentSpeed() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
+                        speedTxt.setText("<24 km/h");
+                    } else{
+                        speedTxt.setText(String.format("%s km/h", (int) primaryData.getCurrentSpeed()));
+                    }
                 }
             }
         }
@@ -441,21 +445,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     Log.v(HOME, "Activating crash detection algorithm...");
                     running = true;
                     setupWriters();
-
-                    dataWriter.writeNext(new String[]{
-                            "Omega",
-                            "Angular Acceleration",
-                            "G-Force",
-                            "Jerk",
-                            "Speed",
-                            "Acceleration",
-                            "dB",
-                            "dB Delta",
-                            "Crash",
-                            "Case",
-                            "Timestamp",
-                            "Milliseconds"
-                    });
 
                     manager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
@@ -583,7 +572,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         if(primaryData != null){
             primaryData.clearBuffers();
         }
-        /**/
         if(manager != null) {
             manager.unregisterListener(sensorListener);
         }
@@ -705,10 +693,26 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         // File exist
         try {
             if (f.exists() && !f.isDirectory()) {
-                mFileWriter = new FileWriter(filePath, true);
+                mFileWriter = new FileWriter(filePath, false);
                 dataWriter = new CSVWriter(mFileWriter);
             } else {
                 dataWriter = new CSVWriter(new FileWriter(filePath));
+            }
+            if(dataWriter != null) {
+                dataWriter.writeNext(new String[]{
+                        "Omega",
+                        "Angular Acceleration",
+                        "G-Force",
+                        "Jerk",
+                        "Speed",
+                        "Acceleration",
+                        "dB",
+                        "dB Delta",
+                        "Case",
+                        "Crash",
+                        "Timestamp",
+                        "Milliseconds"
+                });
             }
         } catch (IOException e) {
             Log.v(HOME,e.getMessage());

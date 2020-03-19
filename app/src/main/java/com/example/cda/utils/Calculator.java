@@ -22,7 +22,7 @@ public class Calculator {
     }
 
     public double calculateCurrentSpeed(Location prev, Location curr){
-        float time = (curr.getTime() - prev.getTime()) / 1000;
+        float time = (float) ((curr.getTime() - prev.getTime()) / Constants.SECS2MS);
         float distance = curr.distanceTo(prev);
         float speed = distance / time;
         if (speed < 1 || Double.isNaN(speed) || Double.isInfinite(speed)) {
@@ -74,9 +74,9 @@ public class Calculator {
         return omegaMag;
     }
 
-    public double calculateRateOfChange(double prevVal, double currVal){
-        double dv = currVal - prevVal;
-        return dv/1;
+    public double calculateRateOfChange(double prevVal, double currVal, double deltaTime){
+        double deltaValues = currVal - prevVal;
+        return deltaValues/deltaTime;
     }
 
     public double calculateAverage(List<Double> list){
