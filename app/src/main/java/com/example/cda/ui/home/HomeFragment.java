@@ -71,6 +71,7 @@ import static com.example.cda.utils.Constants.AUTO_DISMISS_MILLIS;
 import static com.example.cda.utils.Constants.BUFFER_SIZE;
 import static com.example.cda.utils.Constants.CLOSE_ZOOM;
 import static com.example.cda.utils.Constants.COUNT_DOWN_INTERVAL_MILLIS;
+import static com.example.cda.utils.Constants.G_FORCE_THRESHOLD;
 import static com.example.cda.utils.Constants.LOCATION_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MICROPHONE_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MS2KMH;
@@ -181,10 +182,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         @Override
         public void run() {
             Log.v(CDA, "Checking if crash occurred...");
-            boolean crash = false;
-            boolean speedEvent = false;
+            boolean speedEvent = false, gForceEvent = false;
 
+            int criticalDecelerationIndex = Integer.MAX_VALUE;
             double currentSpeed = primaryData.getCurrentSpeed();
+            Log.v(CDA, "Analysing speed parameter");
             if(currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD){ // vehicle is idle / moving slowly
                 Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
                 OptionalDouble runningAverage = primaryData.getBufferSpeed()
@@ -201,7 +203,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         if (criticalDeceleration.isPresent()) { // recent critical deceleration exists
                             Log.v(CDA, "Vehicle experienced critical deceleration @ " + criticalDeceleration.get() + " m/s^2");
                             speedEvent = true;
-                            crash = true;
+                            criticalDecelerationIndex = primaryData.getBufferAcceleration().indexOf(criticalDeceleration.get());
                         } else {
                             Log.v(CDA, "Vehicle did not experience critical deceleration");
                         }
@@ -213,6 +215,28 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 }
             }else{
                 Log.v(CDA, "Vehicle still moving @ " + currentSpeed + " km/h");
+            }
+
+            Log.v(CDA, "Analysing g-force parameter"); // used to confirm the critical deceleration
+            if(criticalDecelerationIndex != Integer.MAX_VALUE){
+                Log.v(CDA, "Checking g-force during critical deceleration");
+                double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(criticalDecelerationIndex);
+                Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration +
+                        " G during critical deceleration " +
+                        (primaryData.getBufferGForce().size()-criticalDecelerationIndex) +
+                        " seconds ago");
+                if(gForceDuringDeceleration >= G_FORCE_THRESHOLD){
+                    Log.v(CDA, "Deceleration confirmed by g-force");
+                    gForceEvent = true;
+                }else{
+                    Log.v(CDA, "Vehicle did not experience critical g-force");
+                }
+            }else{
+                Log.v(CDA, "Critical deceleration did not occur");
+            }
+
+            if(speedEvent && gForceEvent){
+                crash = true;
             }
 
             if(dataWriter!=null){
@@ -231,6 +255,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         String.valueOf(System.currentTimeMillis())
                 });
             }
+
+            if(crash){
+                SOS();
+            }
+
             crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
 
         }
@@ -319,7 +348,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 }
                 prevTimestamp = event.timestamp;
             }
-            if(dataWriter!= null){
+            /*if(dataWriter!= null){
                /* String triggeredEvent = "";
                 if(((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (primaryData.getCurrentSpeed()>=VEHICLE_SPEED_THRESHOLD)){ // travelling and hit
                     crash= true;
@@ -346,10 +375,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     crash = false;
                 }
                 dataWriter.writeNext(new String[]{String.valueOf(primaryData.getCurrentOmega()), String.valueOf(primaryData.getCurrentGForce()), String.valueOf(primaryData.getCurrentSpeed()), String.valueOf(primaryData.getCurrentDecibels()), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date()), String.valueOf(System.currentTimeMillis()/SECS2MS)});
-                */if(crash){
+                if(crash){
                     SOS();
                 }
-            }
+            }*/
         }
 
         @Override
@@ -508,7 +537,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private void stop(){
         running = false;
         speedTxt.setText("N/A");
-        //speedDeviation = 0;
         monitorButton.setText("Start Monitoring");
         monitorButton.setTag("ready");
         statusTxt.setText("Off");

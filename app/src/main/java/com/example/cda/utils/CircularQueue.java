@@ -30,4 +30,34 @@ public class CircularQueue<E> extends ArrayBlockingQueue<E> {
         }
         return (double) this.toArray()[this.size() - 1];
     }
+
+    public int indexOf(E e){
+        E[] tmp = (E[]) this.toArray();
+        for(int i =0;i<this.size();i++){
+            if(tmp[i] == e){
+                return i;
+            }
+        }
+        return Integer.MAX_VALUE;
+    }
+
+    public double closestMax(int index){
+        if(index < 0 || index > size){
+            return Double.NaN;
+        }
+
+        if(index == size - 1){
+            double curr = (double) this.toArray()[index];
+            double prev = (double) this.toArray()[index-1];
+            return (Math.max(curr, prev));
+        }
+
+        double curr = (double) this.toArray()[index];
+        double prev = (double) this.toArray()[index - 1];
+        double next = (double) this.toArray()[index + 1];
+
+        return Math.max(prev, Math.max(curr, next));
+
+
+    }
 }
