@@ -294,7 +294,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 }else {
                     Log.v(CDA, "Fetching g-force from " + criticalDeceleration.getdT() + " seconds ago");
 
-                    double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax((int) criticalDeceleration.getdT());
+                    double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(Math.round(criticalDeceleration.getdT()));
                     Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration + " G during critical deceleration ");
                     if (gForceDuringDeceleration >= G_FORCE_THRESHOLD) {
                         Log.v(CDA, "Deceleration confirmed by g-force");
@@ -352,7 +352,19 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             if(oldLocation != null) { // More than one location is available
 
                 if(running) {
-                    double delayBetweenLocations = (float) ((newLocation.getTime() - oldLocation.getTime()) / Constants.SECS2MS);
+                    float delayBetweenLocations = (float) ((newLocation.getTime() - oldLocation.getTime()) / Constants.SECS2MS);
+
+                    /** Temporary solution to acceleration being calculated incorrectly **/
+                    if(delayBetweenLocations < 0){ // if negative
+                        delayBetweenLocations = -delayBetweenLocations;
+                    }
+                    if(delayBetweenLocations < 1){ // if a decimal below 1
+                        delayBetweenLocations = 1;
+                    }
+                    if(delayBetweenLocations != Math.round(delayBetweenLocations)){ // if not a whole number
+                        delayBetweenLocations = Math.round(delayBetweenLocations);
+                    }
+
                     double currentSpeed = calculator.calculateCurrentSpeed(oldLocation, newLocation);
                     Log.v(SPEED, "Calculating speed between locations");
                     primaryData.setCurrentSpeed(currentSpeed); // calculate speed between locations

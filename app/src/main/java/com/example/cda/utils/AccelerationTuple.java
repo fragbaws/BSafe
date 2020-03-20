@@ -6,9 +6,9 @@ package com.example.cda.utils;
 public class AccelerationTuple {
 
     private double value;
-    private double dT;
+    private float dT;
 
-    public AccelerationTuple(double val, double dt){
+    public AccelerationTuple(double val, float dt){
         this.value = val;
         this.dT = dt;
     }
@@ -17,7 +17,7 @@ public class AccelerationTuple {
         return value;
     }
 
-    public double getdT() {
+    public float getdT() {
         return dT;
     }
 

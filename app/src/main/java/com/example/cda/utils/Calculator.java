@@ -3,7 +3,6 @@ package com.example.cda.utils;
 import android.location.Location;
 import android.media.MediaRecorder;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Calculator {
@@ -31,18 +30,6 @@ public class Calculator {
         return (speed*Constants.MS2KMH);
     }
 
-    public double calculateSpeedDeviation(ArrayList<Integer> speeds){
-        double tmp = 0;
-        for(Integer curr: speeds){
-            tmp+=curr;
-        }
-        double mean = tmp/speeds.size();
-        double sum = 0;
-        for(Integer curr: speeds){
-            sum += Math.pow((curr - mean), 2);
-        }
-        return Math.sqrt(sum/speeds.size());
-    }
 
     public double calculateDecibels(MediaRecorder recorder){
         if(recorder != null){
@@ -74,7 +61,7 @@ public class Calculator {
         return omegaMag;
     }
 
-    public double calculateRateOfChange(double prevVal, double currVal, double deltaTime){
+    public double calculateRateOfChange(double prevVal, double currVal, float deltaTime){
         double deltaValues = currVal - prevVal;
         return deltaValues/deltaTime;
     }
