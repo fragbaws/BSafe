@@ -194,14 +194,18 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             Log.v(SECONDARY_DATA, "Acceleration" + primaryData.getBufferAcceleration());
 
             if(dataWriter!=null){
+                AccelerationTuple accelerationTuple = primaryData.getBufferAcceleration().recent();
+                if(accelerationTuple == null){
+                    accelerationTuple = new AccelerationTuple(0,0);
+                }
                 dataWriter.writeNext(new String[]{
                         String.valueOf(primaryData.getBufferOmega().recent()),
                         String.valueOf(primaryData.getBufferAngularAcceleration().recent()),
                         String.valueOf(primaryData.getBufferGForce().recent()),
                         String.valueOf(primaryData.getBufferGForceJerk().recent()),
                         String.valueOf(primaryData.getBufferSpeed().recent()),
-                        String.valueOf(primaryData.getBufferAcceleration().recent().getValue()),
-                        String.valueOf(primaryData.getBufferAcceleration().recent().getdT()),
+                        String.valueOf(accelerationTuple.getValue()),
+                        String.valueOf(accelerationTuple.getdT()),
                         String.valueOf(primaryData.getBufferDecibels().recent()),
                         String.valueOf(primaryData.getBufferDecibelROC().recent()),
                         "N/A",
