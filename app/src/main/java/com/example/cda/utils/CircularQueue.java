@@ -28,6 +28,9 @@ public class CircularQueue<E> extends ArrayDeque<E> {
     }
 
     public E recent(){
+        if(this.size() == 0){
+            return null;
+        }
         return super.getFirst();
     }
 
