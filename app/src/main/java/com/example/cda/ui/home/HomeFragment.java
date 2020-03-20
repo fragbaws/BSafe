@@ -37,6 +37,7 @@ import com.example.cda.MainActivity;
 import com.example.cda.R;
 import com.example.cda.data.PrimaryData;
 import com.example.cda.entry.User;
+import com.example.cda.utils.AccelerationTuple;
 import com.example.cda.utils.Calculator;
 import com.example.cda.utils.Constants;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -62,16 +63,17 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static android.os.Environment.getExternalStorageDirectory;
 import static com.example.cda.utils.Constants.AUTO_DISMISS_MILLIS;
-import static com.example.cda.utils.Constants.BUFFER_SIZE;
 import static com.example.cda.utils.Constants.CLOSE_ZOOM;
 import static com.example.cda.utils.Constants.COUNT_DOWN_INTERVAL_MILLIS;
 import static com.example.cda.utils.Constants.G_FORCE_THRESHOLD;
+import static com.example.cda.utils.Constants.INTERNAL_DATA_BUFFER_SIZE;
 import static com.example.cda.utils.Constants.LOCATION_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MICROPHONE_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MS2KMH;
@@ -198,7 +200,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         String.valueOf(primaryData.getBufferGForce().recent()),
                         String.valueOf(primaryData.getBufferGForceJerk().recent()),
                         String.valueOf(primaryData.getBufferSpeed().recent()),
-                        String.valueOf(primaryData.getBufferAcceleration().recent()),
+                        String.valueOf(primaryData.getBufferAcceleration().recent().getValue()),
+                        String.valueOf(primaryData.getBufferAcceleration().recent().getdT()),
                         String.valueOf(primaryData.getBufferDecibels().recent()),
                         String.valueOf(primaryData.getBufferDecibelROC().recent()),
                         "N/A",
@@ -220,7 +223,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             Log.v(CDA, "Checking if crash occurred...");
             boolean speedEvent = false, gForceEvent = false;
 
-            int criticalDecelerationIndex = Integer.MAX_VALUE;
+            AccelerationTuple criticalDeceleration = null;
             double currentSpeed = primaryData.getCurrentSpeed();
             Log.v(CDA, "Analysing speed parameter");
             if(currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD){ // vehicle is idle / moving slowly
@@ -254,20 +257,18 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
                         Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
 
-                        OptionalDouble decelerationOptional = primaryData.getBufferAcceleration()
+                        Optional<AccelerationTuple> decelerationOptional = primaryData.getBufferAcceleration()
                                 .stream()
-                                .mapToDouble(Double::doubleValue)
-                                .filter(x -> x <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
+                                .filter(x -> x.getValue() <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
                                 .findFirst();
-                        double deceleration = (decelerationOptional.isPresent() ? decelerationOptional.getAsDouble(): Double.NaN);
                         Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
                         Log.v(CDA, "Acceleration: " + primaryData.getBufferAcceleration());
 
-                        if (!Double.isNaN(deceleration)) { // recent critical deceleration exists
-                            Log.v(CDA, "Vehicle experienced critical deceleration @ " + deceleration + " m/s^2");
+                        if (decelerationOptional.isPresent()) { // recent critical deceleration exists
+                            Log.v(CDA, "Vehicle experienced critical deceleration @ " + decelerationOptional.get().getValue() + " m/s^2");
                             speedEvent = true;
-                            criticalDecelerationIndex = primaryData.getBufferAcceleration().indexOf(deceleration);
-                            Log.v(CDA, "Critical Deceleration Index: " + criticalDecelerationIndex);
+                            criticalDeceleration = primaryData.getBufferAcceleration().indexOf(decelerationOptional.get());
+                            Log.v(CDA, "Critical deceleration occurred " + criticalDeceleration.getdT() +" seconds ago");
                         } else {
                             Log.v(CDA, "Vehicle did not experience critical deceleration");
                         }
@@ -282,15 +283,21 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }
 
             Log.v(CDA, "Analysing g-force parameter"); // used to confirm the critical deceleration
-            if(criticalDecelerationIndex != Integer.MAX_VALUE){
+            if(criticalDeceleration != null){
                 Log.v(CDA, "Checking g-force during critical deceleration");
-                double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(criticalDecelerationIndex);
-                Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration + " G during critical deceleration ");
-                if(gForceDuringDeceleration >= G_FORCE_THRESHOLD){
-                    Log.v(CDA, "Deceleration confirmed by g-force");
-                    gForceEvent = true;
-                }else{
-                    Log.v(CDA, "Vehicle did not experience critical g-force");
+                if(criticalDeceleration.getdT() > INTERNAL_DATA_BUFFER_SIZE){
+                    Log.v(CDA, "No information available about g-force " + criticalDeceleration.getdT() + " seconds ago");
+                }else {
+                    Log.v(CDA, "Fetching g-force from " + criticalDeceleration.getdT() + " seconds ago");
+
+                    double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax((int) criticalDeceleration.getdT());
+                    Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration + " G during critical deceleration ");
+                    if (gForceDuringDeceleration >= G_FORCE_THRESHOLD) {
+                        Log.v(CDA, "Deceleration confirmed by g-force");
+                        gForceEvent = true;
+                    } else {
+                        Log.v(CDA, "Vehicle did not experience critical g-force");
+                    }
                 }
             }else{
                 Log.v(CDA, "Critical deceleration did not occur");
@@ -351,8 +358,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     if (primaryData.getBufferSpeed().size() >= 2) { // calculate acceleration between locations
                         Log.v(SPEED, "Calculating acceleration between locations");
                         double[] speedPair = primaryData.getBufferSpeed().getRecentPair();
-                        double acceleration = calculator.calculateRateOfChange(speedPair[1], speedPair[0], delayBetweenLocations);
-                        primaryData.getBufferAcceleration().add(acceleration);
+                        double acceleration = calculator.calculateRateOfChange(speedPair[1]/MS2KMH, speedPair[0]/MS2KMH, delayBetweenLocations);
+                        AccelerationTuple accTuple = new AccelerationTuple(acceleration, delayBetweenLocations);
+                        primaryData.getBufferAcceleration().add(accTuple);
                         Log.v(SPEED, "Acceleration between locations: " + acceleration + " m/s^2");
                     }
 
@@ -431,21 +439,20 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         monitorButton = root.findViewById(R.id.monitor_button);
         monitorButton.setTag("ready");
 
-        primaryData = new PrimaryData(BUFFER_SIZE);
+        primaryData = new PrimaryData();
         bufferDecibel = new ArrayList<>();
         bufferGForce = new ArrayList<>();
         bufferOmega = new ArrayList<>();
         calculateRunningAverageThreadHandler = new Handler();
         calculateRateOfChangeThreadHandler = new Handler();
         crashDetectionThreadHandler = new Handler();
-        
+
         monitorButton.setOnClickListener(v -> {
             if(v.getId() == monitorButton.getId()){
                 if(monitorButton.getTag().equals("ready")) {
                     Log.v(HOME, "Activating crash detection algorithm...");
                     running = true;
                     setupWriters();
-
                     manager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
@@ -698,22 +705,21 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             } else {
                 dataWriter = new CSVWriter(new FileWriter(filePath));
             }
-            if(dataWriter != null) {
-                dataWriter.writeNext(new String[]{
-                        "Omega",
-                        "Angular Acceleration",
-                        "G-Force",
-                        "Jerk",
-                        "Speed",
-                        "Acceleration",
-                        "dB",
-                        "dB Delta",
-                        "Case",
-                        "Crash",
-                        "Timestamp",
-                        "Milliseconds"
-                });
-            }
+            dataWriter.writeNext(new String[]{
+                    "Omega",
+                    "Angular Acceleration",
+                    "G-Force",
+                    "Jerk",
+                    "Speed",
+                    "Acceleration",
+                    "dT",
+                    "dB",
+                    "dB Delta",
+                    "Case",
+                    "Crash",
+                    "Timestamp",
+                    "Milliseconds"
+            });
         } catch (IOException e) {
             Log.v(HOME,e.getMessage());
         }

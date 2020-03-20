@@ -10,7 +10,8 @@ public class Constants {
     public static final double GRAVITY_CONSTANT = 9.81;
 
     /*Intervals (secs) at which each data is recorded*/
-    public static final int BUFFER_SIZE = 5;
+    public static final int INTERNAL_DATA_BUFFER_SIZE = 10;
+    public static final int EXTERNAL_DATA_BUFFER_SIZE = 5;
     public static final double LOCATION_INTERVAL_SECS = 1;
     public static final double ACCELEROMETER_INTERVAL_SECS = .02;
     public static final double GYROSCOPE_INTERVAL_SECS = .02;

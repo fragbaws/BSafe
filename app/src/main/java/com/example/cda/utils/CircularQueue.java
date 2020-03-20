@@ -31,6 +31,7 @@ public class CircularQueue<E> extends ArrayDeque<E> {
         if(this.size() == 0){
             return null;
         }
+
         return super.getFirst();
     }
 
@@ -42,17 +43,20 @@ public class CircularQueue<E> extends ArrayDeque<E> {
     }
 
 
-    public int indexOf(double e){
-        Iterator it = this.iterator();
-        int index = 0;
-        while(it.hasNext()){
-            if(it.next().equals(e)){
-                return index;
+    public AccelerationTuple indexOf(E e){
+        if(e instanceof AccelerationTuple) {
+            Iterator it = this.iterator();
+            int dtTotal = 0; // required to find how long deceleration occurred
+            while (it.hasNext()) {
+                AccelerationTuple curr = (AccelerationTuple) it.next();
+                if (curr.getValue() == ((AccelerationTuple) e).getValue()) {
+                    return new AccelerationTuple(curr.getValue(), dtTotal);
+                }
+                dtTotal += curr.getdT();
             }
-            index++;
         }
 
-        return Integer.MAX_VALUE;
+        return null;
     }
 
     public double closestMax(int index){

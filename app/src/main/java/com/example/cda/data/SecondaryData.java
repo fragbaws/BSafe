@@ -1,32 +1,37 @@
 package com.example.cda.data;
 
+import com.example.cda.utils.AccelerationTuple;
 import com.example.cda.utils.CircularQueue;
+import com.example.cda.utils.Constants;
 
 public class SecondaryData {
 
-    /** Records for last 10 second period, each entry is running average over 1 second **/
+    /** Records for last X seconds period, each entry is running average over Y seconds as each entry
+     * is calculated with each location callback which can have a delay of >=1 second **/
     private CircularQueue<Double> bufferSpeed;
+
+    /** Records for last 10 second period, each entry is running average over 1 second **/
     private CircularQueue<Double> bufferGForce;
     private CircularQueue<Double> bufferOmega;
     private CircularQueue<Double> bufferDecibels;
 
-    /*Rate of change*/
-    private CircularQueue<Double> bufferAcceleration;
+    /** Rate of change of primary data buffers **/
+    private CircularQueue<AccelerationTuple> bufferAcceleration;
     private CircularQueue<Double> bufferAngularAcceleration;
     private CircularQueue<Double> bufferGForceJerk;
     private CircularQueue<Double> bufferDecibelROC;
 
 
-    public SecondaryData(int capacity){
-        bufferAcceleration = new CircularQueue<>(capacity-1);
-        bufferAngularAcceleration = new CircularQueue<>(capacity-1);
-        bufferGForceJerk = new CircularQueue<>(capacity-1);
-        bufferDecibelROC = new CircularQueue<>(capacity-1);
+    public SecondaryData(){
+        bufferAcceleration = new CircularQueue<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
+        bufferAngularAcceleration = new CircularQueue<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
+        bufferGForceJerk = new CircularQueue<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
+        bufferDecibelROC = new CircularQueue<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
 
-        bufferSpeed = new CircularQueue<>(capacity);
-        bufferGForce = new CircularQueue<>(capacity);
-        bufferOmega = new CircularQueue<>(capacity);
-        bufferDecibels = new CircularQueue<>(capacity);
+        bufferSpeed = new CircularQueue<>(Constants.EXTERNAL_DATA_BUFFER_SIZE);
+        bufferGForce = new CircularQueue<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
+        bufferOmega = new CircularQueue<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
+        bufferDecibels = new CircularQueue<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
     }
 
     public CircularQueue<Double> getBufferSpeed() {
@@ -45,7 +50,7 @@ public class SecondaryData {
         return bufferDecibels;
     }
 
-    public CircularQueue<Double> getBufferAcceleration() {
+    public CircularQueue<AccelerationTuple> getBufferAcceleration() {
         return bufferAcceleration;
     }
 
