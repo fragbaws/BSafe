@@ -36,6 +36,7 @@ import androidx.fragment.app.Fragment;
 import com.example.cda.MainActivity;
 import com.example.cda.R;
 import com.example.cda.data.PrimaryData;
+import com.example.cda.data.SecondaryData;
 import com.example.cda.entry.User;
 import com.example.cda.utils.AccelerationTuple;
 import com.example.cda.utils.Calculator;
@@ -91,6 +92,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private static final Calculator calculator = Calculator.getInstance();
     private PrimaryData primaryData;
+    private SecondaryData secondaryData;
 
     private ArrayList<Double> bufferOmega;
     private ArrayList<Double> bufferGForce;
@@ -174,40 +176,40 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             double jerk, decibelROC, angularAcceleration;
             if(omegaPair != null){
                 angularAcceleration = calculator.calculateRateOfChange(omegaPair[1], omegaPair[0], 1);
-                primaryData.getBufferAngularAcceleration().add(angularAcceleration);
+                secondaryData.getBufferAngularAcceleration().add(angularAcceleration);
             }
             
             if(gForcePair != null){
                 jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0], 1);
-                primaryData.getBufferGForceJerk().add(jerk);
+                secondaryData.getBufferGForceJerk().add(jerk);
             }
 
             if(decibelPair != null){
                 decibelROC = calculator.calculateRateOfChange(decibelPair[1], decibelPair[0], 1);
-                primaryData.getBufferDecibelROC().add(decibelROC);
+                secondaryData.getBufferDecibelROC().add(decibelROC);
             }
 
 
-            Log.v(SECONDARY_DATA, "Angular Acceleration" + primaryData.getBufferAngularAcceleration());
-            Log.v(SECONDARY_DATA, "Jerk (GForce)" + primaryData.getBufferGForceJerk());
-            Log.v(SECONDARY_DATA, "Decibels ROC" + primaryData.getBufferDecibelROC());
-            Log.v(SECONDARY_DATA, "Acceleration" + primaryData.getBufferAcceleration());
+            Log.v(SECONDARY_DATA, "Angular Acceleration" + secondaryData.getBufferAngularAcceleration());
+            Log.v(SECONDARY_DATA, "Jerk (GForce)" + secondaryData.getBufferGForceJerk());
+            Log.v(SECONDARY_DATA, "Decibels ROC" + secondaryData.getBufferDecibelROC());
+            Log.v(SECONDARY_DATA, "Acceleration" + secondaryData.getBufferAcceleration());
 
             if(dataWriter!=null){
-                AccelerationTuple accelerationTuple = primaryData.getBufferAcceleration().recent();
+                AccelerationTuple accelerationTuple = secondaryData.getBufferAcceleration().recent();
                 if(accelerationTuple == null){
                     accelerationTuple = new AccelerationTuple(0,0);
                 }
                 dataWriter.writeNext(new String[]{
                         String.valueOf(primaryData.getBufferOmega().recent()),
-                        String.valueOf(primaryData.getBufferAngularAcceleration().recent()),
+                        String.valueOf(secondaryData.getBufferAngularAcceleration().recent()),
                         String.valueOf(primaryData.getBufferGForce().recent()),
-                        String.valueOf(primaryData.getBufferGForceJerk().recent()),
+                        String.valueOf(secondaryData.getBufferGForceJerk().recent()),
                         String.valueOf(primaryData.getBufferSpeed().recent()),
                         String.valueOf(accelerationTuple.getValue()),
                         String.valueOf(accelerationTuple.getdT()),
                         String.valueOf(primaryData.getBufferDecibels().recent()),
-                        String.valueOf(primaryData.getBufferDecibelROC().recent()),
+                        String.valueOf(secondaryData.getBufferDecibelROC().recent()),
                         "N/A",
                         String.valueOf(crash),
                         DateFormat.getDateTimeInstance().format(new Date()),
@@ -228,7 +230,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             boolean speedEvent = false, gForceEvent = false;
 
             AccelerationTuple criticalDeceleration = null;
-            double currentSpeed = primaryData.getCurrentSpeed();
+            double currentSpeed = primaryData.getBufferSpeed().recent();
             Log.v(CDA, "Analysing speed parameter");
             if(currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD){ // vehicle is idle / moving slowly
                 Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
@@ -261,17 +263,17 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
                         Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
 
-                        Optional<AccelerationTuple> decelerationOptional = primaryData.getBufferAcceleration()
+                        Optional<AccelerationTuple> decelerationOptional = secondaryData.getBufferAcceleration()
                                 .stream()
                                 .filter(x -> x.getValue() <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
                                 .findFirst();
                         Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
-                        Log.v(CDA, "Acceleration: " + primaryData.getBufferAcceleration());
+                        Log.v(CDA, "Acceleration: " + secondaryData.getBufferAcceleration());
 
                         if (decelerationOptional.isPresent()) { // recent critical deceleration exists
                             Log.v(CDA, "Vehicle experienced critical deceleration @ " + decelerationOptional.get().getValue() + " m/s^2");
                             speedEvent = true;
-                            criticalDeceleration = primaryData.getBufferAcceleration().indexOf(decelerationOptional.get());
+                            criticalDeceleration = secondaryData.getBufferAcceleration().indexOf(decelerationOptional.get());
                             Log.v(CDA, "Critical deceleration occurred " + criticalDeceleration.getdT() +" seconds ago");
                         } else {
                             Log.v(CDA, "Vehicle did not experience critical deceleration");
@@ -367,7 +369,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
                     double currentSpeed = calculator.calculateCurrentSpeed(oldLocation, newLocation);
                     Log.v(SPEED, "Calculating speed between locations");
-                    primaryData.setCurrentSpeed(currentSpeed); // calculate speed between locations
+                    primaryData.getBufferSpeed().add(currentSpeed); // calculate speed between locations
                     Log.v(SPEED, "Current speed: " + currentSpeed + " km/h");
                     Log.v(SPEED, "Delay between locations: " + delayBetweenLocations + "s");
 
@@ -376,14 +378,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         double[] speedPair = primaryData.getBufferSpeed().getRecentPair();
                         double acceleration = calculator.calculateRateOfChange(speedPair[1]/MS2KMH, speedPair[0]/MS2KMH, delayBetweenLocations);
                         AccelerationTuple accTuple = new AccelerationTuple(acceleration, delayBetweenLocations);
-                        primaryData.getBufferAcceleration().add(accTuple);
+                        secondaryData.getBufferAcceleration().add(accTuple);
                         Log.v(SPEED, "Acceleration between locations: " + acceleration + " m/s^2");
                     }
 
-                    if(primaryData.getCurrentSpeed() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
+                    if(primaryData.getBufferSpeed().recent() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
                         speedTxt.setText("<24 km/h");
                     } else{
-                        speedTxt.setText(String.format("%s km/h", (int) primaryData.getCurrentSpeed()));
+                        speedTxt.setText(String.format("%s km/h", Math.floor(primaryData.getBufferSpeed().recent())));
                     }
                 }
             }
@@ -395,15 +397,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         @Override
         public void onSensorChanged(SensorEvent event) {
             if(event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION){
-                primaryData.setCurrentGForce(calculator.calculateGForce(event.values[0], event.values[1], event.values[2]));
-                bufferGForce.add(primaryData.getCurrentGForce());
+                double gforce = calculator.calculateGForce(event.values[0], event.values[1], event.values[2]);
+                bufferGForce.add(gforce);
             }
             if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
                 if(prevTimestamp!=0) {
-                    primaryData.setCurrentOmega(calculator.calculateOmega(event.values[0],
-                            event.values[1], event.values[2], prevTimestamp, event.timestamp));
-                    bufferOmega.add(primaryData.getCurrentOmega());
-
+                    double omega = calculator.calculateOmega(event.values[0],
+                            event.values[1], event.values[2], prevTimestamp, event.timestamp);
+                    bufferOmega.add(omega);
                 }
                 prevTimestamp = event.timestamp;
             }
@@ -456,6 +457,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         monitorButton.setTag("ready");
 
         primaryData = new PrimaryData();
+        secondaryData = new SecondaryData();
         bufferDecibel = new ArrayList<>();
         bufferGForce = new ArrayList<>();
         bufferOmega = new ArrayList<>();
@@ -513,8 +515,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                primaryData.setCurrentDecibels(calculator.calculateDecibels(recorder));
-                bufferDecibel.add(primaryData.getCurrentDecibels());
+                double dB = calculator.calculateDecibels(recorder);
+                bufferDecibel.add(dB);
                 handler.postDelayed(this, (long) (MICROPHONE_INTERVAL_SECS*SECS2MS)); //20ms caused alot of -Infinity values (rubbish values)
             }
         }, 0);
@@ -595,6 +597,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         if(primaryData != null){
             primaryData.clearBuffers();
         }
+        if(secondaryData != null){
+            secondaryData.clearBuffers();
+        }
         if(manager != null) {
             manager.unregisterListener(sensorListener);
         }
@@ -670,8 +675,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         "Bibulous: " + user.getBibulous() + "\n" +
                         "Medical condition: " + user.getMedicalCondition() + "\n" +
                         "Blood type: " + user.getBloodType() + "\n" +
-                        "Last speed: " + (int) primaryData.getCurrentSpeed() + " km/h \n" +
-                        "G-Force experienced: " + primaryData.getCurrentGForce() + "\n\n" +
+                        "Last speed: " + Math.floor(primaryData.getBufferSpeed().recent()) + " km/h \n" +
+                        "G-Force experienced: " + primaryData.getBufferGForce().recent() + "\n\n" +
                         "You received this message because " + user.getFirstName() + " has listed you as an emergency contact in BSafe.";
 
             Log.v(HOME, "Sending message to " + phoneNo);

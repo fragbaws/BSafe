@@ -1,64 +1,40 @@
 package com.example.cda.data;
 
-import com.example.cda.utils.AccelerationTuple;
-import com.example.cda.utils.CircularQueue;
+import com.example.cda.utils.Buffer;
+import com.example.cda.utils.Constants;
 
 public class PrimaryData {
 
-    private SecondaryData secondaryData;
-    private double currentSpeed;
-    private double currentGForce;
-    private double currentOmega;
-    private double currentDecibels;
+    /** Records for last X seconds period, each entry is running average over Y seconds as each entry
+     * is calculated with each location callback which can have a delay of >=1 second **/
+    private Buffer<Double> bufferSpeed;
+
+    /** Records for last 10 second period, each entry is a running average over 1 second **/
+    private Buffer<Double> bufferGForce;
+    private Buffer<Double> bufferOmega;
+    private Buffer<Double> bufferDecibels;
 
     public PrimaryData(){
-        secondaryData = new SecondaryData();
+        bufferSpeed = new Buffer<>(Constants.EXTERNAL_DATA_BUFFER_SIZE);
+        bufferGForce = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
+        bufferOmega = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
+        bufferDecibels = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
     }
 
-    public double getCurrentSpeed() { return currentSpeed; }
+    public Buffer<Double> getBufferGForce() { return this.getBufferGForce(); }
 
-    public void setCurrentSpeed(double currentSpeed) {
-        this.currentSpeed = currentSpeed;
-        secondaryData.getBufferSpeed().add(currentSpeed);
-    }
+    public Buffer<Double> getBufferOmega() { return this.getBufferOmega(); }
 
-    public double getCurrentGForce() { return currentGForce; }
+    public Buffer<Double> getBufferDecibels() { return this.getBufferDecibels(); }
 
-    public void setCurrentGForce(double currentGForce) { this.currentGForce = currentGForce; }
+    public Buffer<Double> getBufferSpeed(){ return this.getBufferSpeed(); }
 
-    public double getCurrentOmega() { return currentOmega; }
-
-    public void setCurrentOmega(double currentOmega) { this.currentOmega = currentOmega; }
-
-    public double getCurrentDecibels() { return currentDecibels; }
-
-    public void setCurrentDecibels(double currentDecibels) { this.currentDecibels = currentDecibels; }
-
-    public CircularQueue<Double> getBufferGForce() { return secondaryData.getBufferGForce(); }
-
-    public CircularQueue<Double> getBufferOmega() { return secondaryData.getBufferOmega(); }
-
-    public CircularQueue<Double> getBufferDecibels() { return secondaryData.getBufferDecibels(); }
-
-    public CircularQueue<Double> getBufferSpeed(){ return secondaryData.getBufferSpeed(); }
-
-    public CircularQueue<Double> getBufferGForceJerk() { return secondaryData.getBufferGForceJerk(); }
-
-    public CircularQueue<Double> getBufferAngularAcceleration() { return secondaryData.getBufferAngularAcceleration(); }
-
-    public CircularQueue<Double> getBufferDecibelROC() { return secondaryData.getBufferDecibelROC(); }
-
-    public CircularQueue<AccelerationTuple> getBufferAcceleration(){ return secondaryData.getBufferAcceleration(); }
 
     public void clearBuffers(){
-        getBufferAcceleration().clear();
         getBufferSpeed().clear();
-        getBufferDecibelROC().clear();
-        getBufferGForceJerk().clear();
         getBufferGForce().clear();
         getBufferDecibels().clear();
         getBufferOmega().clear();
-        getBufferAngularAcceleration().clear();
     }
 
 }

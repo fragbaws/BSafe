@@ -52,7 +52,6 @@ public class Calculator {
     }
 
     public double calculateOmega(float x, float y, float z, float prevTime, float currTime){
-        //float dT = (currTime - prevTime) * Constants.NS2S;
         float pitch = x;
         float roll = y;
         float yaw = z;
