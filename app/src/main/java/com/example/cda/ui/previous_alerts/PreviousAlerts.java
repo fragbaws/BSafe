@@ -24,7 +24,6 @@ public class PreviousAlerts extends Fragment {
     private LinearLayout parentLayout;
     private View root;
     private LayoutInflater inflater;
-    private ViewGroup container;
 
     public static PreviousAlerts newInstance() {
         return new PreviousAlerts();
@@ -36,7 +35,6 @@ public class PreviousAlerts extends Fragment {
 
         root = inflater.inflate(R.layout.fragment_previous_alerts, container, false);
         this.inflater = inflater;
-        this.container = container;
         parentLayout =  (LinearLayout) root.findViewById(R.id.alerts_layout_parent);
         return root;
     }
@@ -75,8 +73,8 @@ public class PreviousAlerts extends Fragment {
                 dateTxt.setText(a.getTimestamp());
                 latitudeTxt.setText(a.getLatitude());
                 longitudeTxt.setText(a.getLongitude());
-                speedTxt.setText(a.getSpeed());
-                gforceTxt.setText(a.getGforce());
+                speedTxt.setText(a.getSpeed() +" km/h");
+                gforceTxt.setText(a.getGforce() +" G");
                 parentLayout.addView(view);
             }
         }
