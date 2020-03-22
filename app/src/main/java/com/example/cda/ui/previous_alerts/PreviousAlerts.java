@@ -77,6 +77,9 @@ public class PreviousAlerts extends Fragment {
                 gforceTxt.setText(a.getGforce() +" G");
                 parentLayout.addView(view);
             }
+        }else{
+            View view = inflater.inflate(R.layout.previous_alerts_entry, parentLayout, false);
+            parentLayout.addView(view);
         }
     }
 

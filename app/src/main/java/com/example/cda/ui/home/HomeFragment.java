@@ -1,9 +1,13 @@
 package com.example.cda.ui.home;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -124,123 +128,152 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private boolean running = false;
     private boolean crash = false;
 
+
+    private BroadcastReceiver sentMessage;
+    private BroadcastReceiver deliveredMessage;
+
     private Handler calculateRunningAverageThreadHandler;
-    private Runnable calculateRunningAverageThread = new Runnable() {
-        @Override
-        public void run() {
-
-            double averageOmega, averageGForce, averageDecibel;
-            if(!bufferOmega.isEmpty()){
-                averageOmega = calculator.calculateAverage(bufferOmega);
-                primaryData.getBufferOmega().add(averageOmega);
-                bufferOmega.clear();
-            }
-
-            if(!bufferGForce.isEmpty()){
-                averageGForce = calculator.calculateAverage(bufferGForce);
-                primaryData.getBufferGForce().add(averageGForce);
-                bufferGForce.clear();
-            }
-
-            if(!bufferDecibel.isEmpty()){
-                averageDecibel = calculator.calculateAverage(bufferDecibel);
-                primaryData.getBufferDecibels().add(averageDecibel);
-                bufferDecibel.clear();
-            }
-
-            Log.v(PRIMARY_DATA, "Omega" + primaryData.getBufferOmega());
-            Log.v(PRIMARY_DATA, "GForce" + primaryData.getBufferGForce());
-            Log.v(PRIMARY_DATA, "Decibels" + primaryData.getBufferDecibels());
-            Log.v(PRIMARY_DATA, "Speed" + primaryData.getBufferSpeed());
-
-
-            calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
-        }
-    };
+    private Runnable calculateRunningAverageThread;
 
     private Handler calculateRateOfChangeThreadHandler;
-    private Runnable calculateRateOfChangeThread = new Runnable() {
-        @Override
-        public void run() {
-            double[] gForcePair = null, decibelPair = null, omegaPair = null;
-
-            if(primaryData.getBufferGForce().size() >= 2) {
-                gForcePair = primaryData.getBufferGForce().getRecentPair();
-            }
-            if(primaryData.getBufferDecibels().size() >= 2) {
-                decibelPair = primaryData.getBufferDecibels().getRecentPair();
-            }
-            if(primaryData.getBufferOmega().size() >=2){
-                omegaPair = primaryData.getBufferOmega().getRecentPair();
-            }
-
-
-            double jerk, decibelROC, angularAcceleration;
-            if(omegaPair != null){
-                angularAcceleration = calculator.calculateRateOfChange(omegaPair[1], omegaPair[0], 1);
-                secondaryData.getBufferAngularAcceleration().add(angularAcceleration);
-            }
-            
-            if(gForcePair != null){
-                jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0], 1);
-                secondaryData.getBufferGForceJerk().add(jerk);
-            }
-
-            if(decibelPair != null){
-                decibelROC = calculator.calculateRateOfChange(decibelPair[1], decibelPair[0], 1);
-                secondaryData.getBufferDecibelROC().add(decibelROC);
-            }
-
-
-            Log.v(SECONDARY_DATA, "Angular Acceleration" + secondaryData.getBufferAngularAcceleration());
-            Log.v(SECONDARY_DATA, "Jerk (GForce)" + secondaryData.getBufferGForceJerk());
-            Log.v(SECONDARY_DATA, "Decibels ROC" + secondaryData.getBufferDecibelROC());
-            Log.v(SECONDARY_DATA, "Acceleration" + secondaryData.getBufferAcceleration());
-
-            if(dataWriter!=null){
-                AccelerationTuple accelerationTuple = secondaryData.getBufferAcceleration().recent();
-                if(accelerationTuple == null){
-                    accelerationTuple = new AccelerationTuple(0,0);
-                }
-                dataWriter.writeNext(new String[]{
-                        String.valueOf(primaryData.getBufferOmega().recent()),
-                        String.valueOf(secondaryData.getBufferAngularAcceleration().recent()),
-                        String.valueOf(primaryData.getBufferGForce().recent()),
-                        String.valueOf(secondaryData.getBufferGForceJerk().recent()),
-                        String.valueOf(primaryData.getBufferSpeed().recent()),
-                        String.valueOf(accelerationTuple.getValue()),
-                        String.valueOf(accelerationTuple.getdT()),
-                        String.valueOf(primaryData.getBufferDecibels().recent()),
-                        String.valueOf(secondaryData.getBufferDecibelROC().recent()),
-                        "N/A",
-                        String.valueOf(crash),
-                        DateFormat.getDateTimeInstance().format(new Date()),
-                        String.valueOf(System.currentTimeMillis())
-                });
-            }
-
-            calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
-        }
-    };
+    private Runnable calculateRateOfChangeThread;
 
     private Handler crashDetectionThreadHandler;
-    private Runnable crashDetectionThread = new Runnable() {
-        @RequiresApi(api = Build.VERSION_CODES.N)
-        @Override
-        public void run() {
-            Log.v(CDA, "Checking if crash occurred...");
-            boolean speedEvent = false, gForceEvent = false;
+    private Runnable crashDetectionThread;
 
-            AccelerationTuple criticalDeceleration = null;
-            if(!primaryData.getBufferSpeed().isEmpty()) {
-                double currentSpeed = primaryData.getBufferSpeed().recent();
-                Log.v(CDA, "Analysing speed parameter");
-                if (currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle is idle / moving slowly
-                    Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
-                    OptionalDouble runningAverageOptional = primaryData.getBufferSpeed()
-                            .stream()
-                            .mapToDouble(Double::doubleValue)
-                            .average();
+    private LocationCallback locationCallback;
+
+    private SensorEventListener sensorListener;
+
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_home, container, false);
+        speedTxt = root.findViewById(R.id.speed_text);
+        statusTxt = root.findViewById(R.id.status_text);
+        monitorButton = root.findViewById(R.id.monitor_button);
+        monitorButton.setTag("ready");
+
+        primaryData = new PrimaryData();
+        secondaryData = new SecondaryData();
+        bufferDecibel = new ArrayList<>();
+        bufferGForce = new ArrayList<>();
+        bufferOmega = new ArrayList<>();
+
+        calculateRunningAverageThreadHandler = new Handler();
+        calculateRateOfChangeThreadHandler = new Handler();
+        crashDetectionThreadHandler = new Handler();
+
+        calculateRunningAverageThread = new Runnable() {
+            @Override
+            public void run() {
+
+                double averageOmega, averageGForce, averageDecibel;
+                if(!bufferOmega.isEmpty()){
+                    averageOmega = calculator.calculateAverage(bufferOmega);
+                    primaryData.getBufferOmega().add(averageOmega);
+                    bufferOmega.clear();
+                }
+
+                if(!bufferGForce.isEmpty()){
+                    averageGForce = calculator.calculateAverage(bufferGForce);
+                    primaryData.getBufferGForce().add(averageGForce);
+                    bufferGForce.clear();
+                }
+
+                if(!bufferDecibel.isEmpty()){
+                    averageDecibel = calculator.calculateAverage(bufferDecibel);
+                    primaryData.getBufferDecibels().add(averageDecibel);
+                    bufferDecibel.clear();
+                }
+
+                Log.v(PRIMARY_DATA, "Omega" + primaryData.getBufferOmega());
+                Log.v(PRIMARY_DATA, "GForce" + primaryData.getBufferGForce());
+                Log.v(PRIMARY_DATA, "Decibels" + primaryData.getBufferDecibels());
+                Log.v(PRIMARY_DATA, "Speed" + primaryData.getBufferSpeed());
+
+
+                calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+            }
+        };
+        calculateRateOfChangeThread = new Runnable() {
+            @Override
+            public void run() {
+                double[] gForcePair = null, decibelPair = null, omegaPair = null;
+
+                if(primaryData.getBufferGForce().size() >= 2) {
+                    gForcePair = primaryData.getBufferGForce().getRecentPair();
+                }
+                if(primaryData.getBufferDecibels().size() >= 2) {
+                    decibelPair = primaryData.getBufferDecibels().getRecentPair();
+                }
+                if(primaryData.getBufferOmega().size() >=2){
+                    omegaPair = primaryData.getBufferOmega().getRecentPair();
+                }
+
+
+                double jerk, decibelROC, angularAcceleration;
+                if(omegaPair != null){
+                    angularAcceleration = calculator.calculateRateOfChange(omegaPair[1], omegaPair[0], 1);
+                    secondaryData.getBufferAngularAcceleration().add(angularAcceleration);
+                }
+
+                if(gForcePair != null){
+                    jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0], 1);
+                    secondaryData.getBufferGForceJerk().add(jerk);
+                }
+
+                if(decibelPair != null){
+                    decibelROC = calculator.calculateRateOfChange(decibelPair[1], decibelPair[0], 1);
+                    secondaryData.getBufferDecibelROC().add(decibelROC);
+                }
+
+
+                Log.v(SECONDARY_DATA, "Angular Acceleration" + secondaryData.getBufferAngularAcceleration());
+                Log.v(SECONDARY_DATA, "Jerk (GForce)" + secondaryData.getBufferGForceJerk());
+                Log.v(SECONDARY_DATA, "Decibels ROC" + secondaryData.getBufferDecibelROC());
+                Log.v(SECONDARY_DATA, "Acceleration" + secondaryData.getBufferAcceleration());
+
+                if(dataWriter!=null){
+                    AccelerationTuple accelerationTuple = secondaryData.getBufferAcceleration().recent();
+                    if(accelerationTuple == null){
+                        accelerationTuple = new AccelerationTuple(0,0);
+                    }
+                    dataWriter.writeNext(new String[]{
+                            String.valueOf(primaryData.getBufferOmega().recent()),
+                            String.valueOf(secondaryData.getBufferAngularAcceleration().recent()),
+                            String.valueOf(primaryData.getBufferGForce().recent()),
+                            String.valueOf(secondaryData.getBufferGForceJerk().recent()),
+                            String.valueOf(primaryData.getBufferSpeed().recent()),
+                            String.valueOf(accelerationTuple.getValue()),
+                            String.valueOf(accelerationTuple.getdT()),
+                            String.valueOf(primaryData.getBufferDecibels().recent()),
+                            String.valueOf(secondaryData.getBufferDecibelROC().recent()),
+                            "N/A",
+                            String.valueOf(crash),
+                            DateFormat.getDateTimeInstance().format(new Date()),
+                            String.valueOf(System.currentTimeMillis())
+                    });
+                }
+
+                calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+            }
+        };
+        crashDetectionThread = new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void run() {
+                Log.v(CDA, "Checking if crash occurred...");
+                boolean speedEvent = false, gForceEvent = false;
+
+                AccelerationTuple criticalDeceleration = null;
+                if(!primaryData.getBufferSpeed().isEmpty()) {
+                    double currentSpeed = primaryData.getBufferSpeed().recent();
+                    Log.v(CDA, "Analysing speed parameter");
+                    if (currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle is idle / moving slowly
+                        Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
+                        OptionalDouble runningAverageOptional = primaryData.getBufferSpeed()
+                                .stream()
+                                .mapToDouble(Double::doubleValue)
+                                .average();
                 /*double runningAverage = primaryData.getBufferSpeed().previous();
                 if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
                     Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
@@ -261,159 +294,89 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 } else {
                     Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage + " km/h");
                 }*/
-                    if (runningAverageOptional.isPresent()) {
-                        double runningAverage = runningAverageOptional.getAsDouble();
-                        if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
-                            Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
+                        if (runningAverageOptional.isPresent()) {
+                            double runningAverage = runningAverageOptional.getAsDouble();
+                            if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
+                                Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
 
-                            Optional<AccelerationTuple> decelerationOptional = secondaryData.getBufferAcceleration()
-                                    .stream()
-                                    .filter(x -> x.getValue() <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
-                                    .findFirst();
-                            Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
-                            Log.v(CDA, "Acceleration: " + secondaryData.getBufferAcceleration());
+                                Optional<AccelerationTuple> decelerationOptional = secondaryData.getBufferAcceleration()
+                                        .stream()
+                                        .filter(x -> x.getValue() <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
+                                        .findFirst();
+                                Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
+                                Log.v(CDA, "Acceleration: " + secondaryData.getBufferAcceleration());
 
-                            if (decelerationOptional.isPresent()) { // recent critical deceleration exists
-                                Log.v(CDA, "Vehicle experienced critical deceleration @ " + decelerationOptional.get().getValue() + " m/s^2");
-                                speedEvent = true;
-                                criticalDeceleration = secondaryData.getBufferAcceleration().indexOf(decelerationOptional.get());
-                                Log.v(CDA, "Critical deceleration occurred " + criticalDeceleration.getdT() + " seconds ago");
+                                if (decelerationOptional.isPresent()) { // recent critical deceleration exists
+                                    Log.v(CDA, "Vehicle experienced critical deceleration @ " + decelerationOptional.get().getValue() + " m/s^2");
+                                    speedEvent = true;
+                                    criticalDeceleration = secondaryData.getBufferAcceleration().indexOf(decelerationOptional.get());
+                                    Log.v(CDA, "Critical deceleration occurred " + criticalDeceleration.getdT() + " seconds ago");
+                                } else {
+                                    Log.v(CDA, "Vehicle did not experience critical deceleration");
+                                }
                             } else {
-                                Log.v(CDA, "Vehicle did not experience critical deceleration");
+                                Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage + " km/h");
                             }
                         } else {
-                            Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage + " km/h");
+                            Log.v(CDA, "Previous vehicle speeds not available.");
                         }
                     } else {
-                        Log.v(CDA, "Previous vehicle speeds not available.");
+                        Log.v(CDA, "Vehicle still moving @ " + currentSpeed + " km/h");
                     }
-                } else {
-                    Log.v(CDA, "Vehicle still moving @ " + currentSpeed + " km/h");
+                }else{
+                    Log.v(CDA, "Vehicle has not moved yet.");
                 }
-            }else{
-                Log.v(CDA, "Vehicle has not moved yet.");
-            }
 
-            Log.v(CDA, "Analysing g-force parameter"); // used to confirm the critical deceleration
-            if(criticalDeceleration != null){
-                Log.v(CDA, "Checking g-force during critical deceleration");
-                if(criticalDeceleration.getdT() > INTERNAL_DATA_BUFFER_SIZE){
-                    Log.v(CDA, "No information available about g-force " + criticalDeceleration.getdT() + " seconds ago");
-                }else {
-                    Log.v(CDA, "Fetching g-force from " + criticalDeceleration.getdT() + " seconds ago");
+                Log.v(CDA, "Analysing g-force parameter"); // used to confirm the critical deceleration
+                if(criticalDeceleration != null){
+                    Log.v(CDA, "Checking g-force during critical deceleration");
+                    if(criticalDeceleration.getdT() > INTERNAL_DATA_BUFFER_SIZE){
+                        Log.v(CDA, "No information available about g-force " + criticalDeceleration.getdT() + " seconds ago");
+                    }else {
+                        Log.v(CDA, "Fetching g-force from " + criticalDeceleration.getdT() + " seconds ago");
 
-                    double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(Math.round(criticalDeceleration.getdT()));
-                    Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration + " G during critical deceleration ");
-                    if (gForceDuringDeceleration >= G_FORCE_THRESHOLD) {
-                        Log.v(CDA, "Deceleration confirmed by g-force");
-                        gForceEvent = true;
-                    } else {
-                        Log.v(CDA, "Vehicle did not experience critical g-force");
+                        double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(Math.round(criticalDeceleration.getdT()));
+                        Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration + " G during critical deceleration ");
+                        if (gForceDuringDeceleration >= G_FORCE_THRESHOLD) {
+                            Log.v(CDA, "Deceleration confirmed by g-force");
+                            gForceEvent = true;
+                        } else {
+                            Log.v(CDA, "Vehicle did not experience critical g-force");
+                        }
                     }
+                }else{
+                    Log.v(CDA, "Critical deceleration did not occur");
                 }
-            }else{
-                Log.v(CDA, "Critical deceleration did not occur");
-            }
 
-            if(speedEvent && gForceEvent){
-                crash = true;
-            }
-
-
-            if(crash){
-                SOS();
-            }
-
-            crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
-
-        }
-    };
-
-    private LocationCallback locationCallback = new LocationCallback() {
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            super.onLocationResult(locationResult);
-        if (locationResult.getLocations().size() > 0) {
-            oldLocation = newLocation;
-            newLocation = locationResult.getLastLocation();
-            Log.v(HOME, newLocation.toString());
-
-            if (marker != null) {
-                marker.remove();
-            }
-
-            MarkerOptions markerOptions = new MarkerOptions();
-            markerOptions.position(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()));
-            markerOptions.flat(true);
-            markerOptions.anchor(0.5f, 0.5f);
-            markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.car_color));
-            float bearing;
-            if (newLocation.hasBearing()) {
-                bearing = newLocation.getBearing();
-            } else {
-                bearing = 0;
-            }
-            markerOptions.rotation(bearing);
-            marker = googleMap.addMarker(markerOptions);
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
-
-            if(oldLocation != null) { // More than one location is available
-
-                if(running) {
-                    float delayBetweenLocations = (float) ((newLocation.getTime() - oldLocation.getTime()) / Constants.SECS2MS);
-
-                    /** Temporary solution to acceleration being calculated incorrectly **/
-                    if(delayBetweenLocations < 0){ // if negative
-                        delayBetweenLocations = -delayBetweenLocations;
-                    }
-                    if(delayBetweenLocations < 1){ // if a decimal below 1
-                        delayBetweenLocations = 1;
-                    }
-                    if(delayBetweenLocations != Math.round(delayBetweenLocations)){ // if not a whole number
-                        delayBetweenLocations = Math.round(delayBetweenLocations);
-                    }
-
-                    double currentSpeed = calculator.calculateCurrentSpeed(oldLocation, newLocation);
-                    Log.v(SPEED, "Calculating speed between locations");
-                    primaryData.getBufferSpeed().add(currentSpeed); // calculate speed between locations
-                    Log.v(SPEED, "Current speed: " + currentSpeed + " km/h");
-                    Log.v(SPEED, "Delay between locations: " + delayBetweenLocations + "s");
-
-                    if (primaryData.getBufferSpeed().size() >= 2) { // calculate acceleration between locations
-                        Log.v(SPEED, "Calculating acceleration between locations");
-                        double[] speedPair = primaryData.getBufferSpeed().getRecentPair();
-                        double acceleration = calculator.calculateRateOfChange(speedPair[1]/MS2KMH, speedPair[0]/MS2KMH, delayBetweenLocations);
-                        AccelerationTuple accTuple = new AccelerationTuple(acceleration, delayBetweenLocations);
-                        secondaryData.getBufferAcceleration().add(accTuple);
-                        Log.v(SPEED, "Acceleration between locations: " + acceleration + " m/s^2");
-                    }
-
-                    if(primaryData.getBufferSpeed().recent() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
-                        speedTxt.setText("<24 km/h");
-                    } else{
-                        speedTxt.setText(String.format("%s km/h", Math.floor(primaryData.getBufferSpeed().recent())));
-                    }
+                if(speedEvent && gForceEvent){
+                    crash = true;
                 }
-            }
-        }
-        }
-    };
 
-    private SensorEventListener sensorListener = new SensorEventListener() {
-        @Override
-        public void onSensorChanged(SensorEvent event) {
-            if(event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION){
-                double gforce = calculator.calculateGForce(event.values[0], event.values[1], event.values[2]);
-                bufferGForce.add(gforce);
-            }
-            if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-                if(prevTimestamp!=0) {
-                    double omega = calculator.calculateOmega(event.values[0],
-                            event.values[1], event.values[2], prevTimestamp, event.timestamp);
-                    bufferOmega.add(omega);
+
+                if(crash){
+                    SOS();
                 }
-                prevTimestamp = event.timestamp;
+
+                crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+
             }
+        };
+
+        sensorListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                if(event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION){
+                    double gforce = calculator.calculateGForce(event.values[0], event.values[1], event.values[2]);
+                    bufferGForce.add(gforce);
+                }
+                if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+                    if(prevTimestamp!=0) {
+                        double omega = calculator.calculateOmega(event.values[0],
+                                event.values[1], event.values[2], prevTimestamp, event.timestamp);
+                        bufferOmega.add(omega);
+                    }
+                    prevTimestamp = event.timestamp;
+                }
             /*if(dataWriter!= null){
                /* String triggeredEvent = "";
                 if(((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (primaryData.getCurrentSpeed()>=VEHICLE_SPEED_THRESHOLD)){ // travelling and hit
@@ -445,31 +408,116 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     SOS();
                 }
             }*/
-        }
+            }
 
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
-        }
-    };
+            }
+        };
 
-    private HomeViewModel homeViewModel;
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                if (locationResult.getLocations().size() > 0) {
+                    oldLocation = newLocation;
+                    newLocation = locationResult.getLastLocation();
+                    Log.v(HOME, newLocation.toString());
 
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_home, container, false);
-        speedTxt = root.findViewById(R.id.speed_text);
-        statusTxt = root.findViewById(R.id.status_text);
-        monitorButton = root.findViewById(R.id.monitor_button);
-        monitorButton.setTag("ready");
+                    if (marker != null) {
+                        marker.remove();
+                    }
 
-        primaryData = new PrimaryData();
-        secondaryData = new SecondaryData();
-        bufferDecibel = new ArrayList<>();
-        bufferGForce = new ArrayList<>();
-        bufferOmega = new ArrayList<>();
-        calculateRunningAverageThreadHandler = new Handler();
-        calculateRateOfChangeThreadHandler = new Handler();
-        crashDetectionThreadHandler = new Handler();
+                    MarkerOptions markerOptions = new MarkerOptions();
+                    markerOptions.position(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()));
+                    markerOptions.flat(true);
+                    markerOptions.anchor(0.5f, 0.5f);
+                    markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.car_color));
+                    float bearing;
+                    if (newLocation.hasBearing()) {
+                        bearing = newLocation.getBearing();
+                    } else {
+                        bearing = 0;
+                    }
+                    markerOptions.rotation(bearing + 180);
+                    marker = googleMap.addMarker(markerOptions);
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
+
+                    if(oldLocation != null) { // More than one location is available
+
+                        if(running) {
+                            float delayBetweenLocations = (float) ((newLocation.getTime() - oldLocation.getTime()) / Constants.SECS2MS);
+
+                            /** Temporary solution to acceleration being calculated incorrectly **/
+                            if(delayBetweenLocations < 0){ // if negative
+                                delayBetweenLocations = -delayBetweenLocations;
+                            }
+                            if(delayBetweenLocations < 1){ // if a decimal below 1
+                                delayBetweenLocations = 1;
+                            }
+                            if(delayBetweenLocations != Math.round(delayBetweenLocations)){ // if not a whole number
+                                delayBetweenLocations = Math.round(delayBetweenLocations);
+                            }
+
+                            double currentSpeed = calculator.calculateCurrentSpeed(oldLocation, newLocation);
+                            Log.v(SPEED, "Calculating speed between locations");
+                            primaryData.getBufferSpeed().add(currentSpeed); // calculate speed between locations
+                            Log.v(SPEED, "Current speed: " + currentSpeed + " km/h");
+                            Log.v(SPEED, "Delay between locations: " + delayBetweenLocations + "s");
+
+                            if (primaryData.getBufferSpeed().size() >= 2) { // calculate acceleration between locations
+                                Log.v(SPEED, "Calculating acceleration between locations");
+                                double[] speedPair = primaryData.getBufferSpeed().getRecentPair();
+                                double acceleration = calculator.calculateRateOfChange(speedPair[1]/MS2KMH, speedPair[0]/MS2KMH, delayBetweenLocations);
+                                AccelerationTuple accTuple = new AccelerationTuple(acceleration, delayBetweenLocations);
+                                secondaryData.getBufferAcceleration().add(accTuple);
+                                Log.v(SPEED, "Acceleration between locations: " + acceleration + " m/s^2");
+                            }
+
+                            if(primaryData.getBufferSpeed().recent() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
+                                speedTxt.setText("<24 km/h");
+                            } else{
+                                speedTxt.setText(String.format("%s km/h", Math.floor(primaryData.getBufferSpeed().recent())));
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        sentMessage = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                switch(getResultCode()){
+                    case Activity.RESULT_OK:
+                        Toast.makeText(getContext(), "Alert sent to emergency contact", Toast.LENGTH_LONG).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                    case SmsManager.RESULT_ERROR_NO_SERVICE:
+                    case SmsManager.RESULT_ERROR_NULL_PDU:
+                    case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        sendSMS();
+                        break;
+                }
+            }
+        };
+
+        deliveredMessage = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                switch(getResultCode()){
+                    case Activity.RESULT_OK:
+                        Toast.makeText(getContext(), "Alert delivered to emergency contact", Toast.LENGTH_LONG).show();
+                        getActivity().unregisterReceiver(sentMessage);
+                        getActivity().unregisterReceiver(deliveredMessage);
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        sendSMS();
+                        break;
+                }
+            }
+        };
 
         monitorButton.setOnClickListener(v -> {
             if(v.getId() == monitorButton.getId()){
@@ -613,6 +661,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         monitorButton.setText("Start Monitoring");
         monitorButton.setTag("ready");
         statusTxt.setText("Off");
+
         if(calculateRunningAverageThreadHandler.hasCallbacks(calculateRunningAverageThread)){
             calculateRunningAverageThreadHandler.removeCallbacks(calculateRunningAverageThread);
         }
@@ -649,7 +698,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
         AlertDialog dialog = new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.AlertStyle))
                 .setTitle("Crash detected")
-                .setMessage("The emergency services will be contacted")
+                .setMessage("Your emergency contact will be alerted")
                 .setPositiveButton("SOS", (dialog1, which) -> sendAlert())
                 .setNegativeButton("Cancel", null)
                 .create();
@@ -715,15 +764,31 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 "You received this message because " + user.getFirstName() + " has listed you as an emergency contact in BSafe.";
 
         Log.v(HOME, "Sending message to " + phoneNo);
-        SmsManager smsManager = SmsManager.getDefault();
-        ArrayList<String> parts = smsManager.divideMessage(message);
 
-        smsManager.sendMultipartTextMessage(phoneNo, null, parts, null, null); // sending alert to emergency contact
+
+        getActivity().registerReceiver(sentMessage, new IntentFilter("SMS_SENT"));
+        getActivity().registerReceiver(deliveredMessage, new IntentFilter("SMS_DELIVERED"));
+        sendSMS();
         LoginActivity.sql.insertAlert(new Alert(latitude, longitude, timestamp, speed, gforce)); // sending alert to database
-        Toast.makeText(getContext(), "Alert sent to emergency contact", Toast.LENGTH_LONG).show();
 
     }
 
+    private void sendSMS(){
+        SmsManager smsManager = SmsManager.getDefault();
+        ArrayList<String> parts = smsManager.divideMessage(message);
+
+        ArrayList<PendingIntent> sentPendingIntents = new ArrayList<>();
+        ArrayList<PendingIntent> deliveredPendingIntents = new ArrayList<>();
+        PendingIntent sentPI = PendingIntent.getBroadcast(getActivity(), 0, new Intent("SMS_SENT"), 0);
+        PendingIntent deliveredPI = PendingIntent.getBroadcast(getActivity(), 0, new Intent("SMS_DELIVERED"), 0);
+
+        for(int i =0;i<parts.size();i++){
+            sentPendingIntents.add(sentPI);
+            deliveredPendingIntents.add(deliveredPI);
+        }
+
+        smsManager.sendMultipartTextMessage(phoneNo, null, parts, sentPendingIntents, deliveredPendingIntents); // sending alert to emergency contact
+    }
     @Override
     public void onMapReady(GoogleMap googleMap) {
         if (googleMap != null) {
