@@ -1,30 +1,24 @@
 package com.example.cda.entry;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.util.Log;
-import android.view.ContextThemeWrapper;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.cda.DB.DBHelper;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
 import com.example.cda.MainActivity;
 import com.example.cda.R;
-import com.github.nikartm.button.FitButton;
+import com.example.cda.db.DBHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;

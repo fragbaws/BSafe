@@ -40,10 +40,10 @@ public class SecondaryData {
     }
 
     public void clearBuffers(){
-        getBufferAcceleration().clear();
-        getBufferDecibelROC().clear();
-        getBufferGForceJerk().clear();
-        getBufferAngularAcceleration().clear();
+        this.bufferAcceleration.clear();
+        this.bufferAngularAcceleration.clear();
+        this.bufferDecibelROC.clear();
+        this.bufferGForceJerk.clear();
     }
 
 }

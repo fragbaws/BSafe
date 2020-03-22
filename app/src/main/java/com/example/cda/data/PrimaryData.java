@@ -21,20 +21,20 @@ public class PrimaryData {
         bufferDecibels = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
     }
 
-    public Buffer<Double> getBufferGForce() { return this.getBufferGForce(); }
+    public Buffer<Double> getBufferGForce() { return this.bufferGForce; }
 
-    public Buffer<Double> getBufferOmega() { return this.getBufferOmega(); }
+    public Buffer<Double> getBufferOmega() { return this.bufferOmega; }
 
-    public Buffer<Double> getBufferDecibels() { return this.getBufferDecibels(); }
+    public Buffer<Double> getBufferDecibels() { return this.bufferDecibels; }
 
-    public Buffer<Double> getBufferSpeed(){ return this.getBufferSpeed(); }
+    public Buffer<Double> getBufferSpeed(){ return this.bufferSpeed; }
 
 
     public void clearBuffers(){
-        getBufferSpeed().clear();
-        getBufferGForce().clear();
-        getBufferDecibels().clear();
-        getBufferOmega().clear();
+        this.bufferSpeed.clear();
+        this.bufferGForce.clear();
+        this.bufferDecibels.clear();
+        this.bufferOmega.clear();
     }
 
 }

@@ -37,7 +37,9 @@ import com.example.cda.MainActivity;
 import com.example.cda.R;
 import com.example.cda.data.PrimaryData;
 import com.example.cda.data.SecondaryData;
+import com.example.cda.entry.LoginActivity;
 import com.example.cda.entry.User;
+import com.example.cda.ui.previous_alerts.Alert;
 import com.example.cda.utils.AccelerationTuple;
 import com.example.cda.utils.Calculator;
 import com.example.cda.utils.Constants;
@@ -230,14 +232,15 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             boolean speedEvent = false, gForceEvent = false;
 
             AccelerationTuple criticalDeceleration = null;
-            double currentSpeed = primaryData.getBufferSpeed().recent();
-            Log.v(CDA, "Analysing speed parameter");
-            if(currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD){ // vehicle is idle / moving slowly
-                Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
-                OptionalDouble runningAverageOptional = primaryData.getBufferSpeed()
-                                                    .stream()
-                                                    .mapToDouble(Double::doubleValue)
-                                                    .average();
+            if(!primaryData.getBufferSpeed().isEmpty()) {
+                double currentSpeed = primaryData.getBufferSpeed().recent();
+                Log.v(CDA, "Analysing speed parameter");
+                if (currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle is idle / moving slowly
+                    Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
+                    OptionalDouble runningAverageOptional = primaryData.getBufferSpeed()
+                            .stream()
+                            .mapToDouble(Double::doubleValue)
+                            .average();
                 /*double runningAverage = primaryData.getBufferSpeed().previous();
                 if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
                     Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
@@ -258,34 +261,37 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 } else {
                     Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage + " km/h");
                 }*/
-                if(runningAverageOptional.isPresent()) {
-                    double runningAverage = runningAverageOptional.getAsDouble();
-                    if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
-                        Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
+                    if (runningAverageOptional.isPresent()) {
+                        double runningAverage = runningAverageOptional.getAsDouble();
+                        if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
+                            Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
 
-                        Optional<AccelerationTuple> decelerationOptional = secondaryData.getBufferAcceleration()
-                                .stream()
-                                .filter(x -> x.getValue() <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
-                                .findFirst();
-                        Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
-                        Log.v(CDA, "Acceleration: " + secondaryData.getBufferAcceleration());
+                            Optional<AccelerationTuple> decelerationOptional = secondaryData.getBufferAcceleration()
+                                    .stream()
+                                    .filter(x -> x.getValue() <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
+                                    .findFirst();
+                            Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
+                            Log.v(CDA, "Acceleration: " + secondaryData.getBufferAcceleration());
 
-                        if (decelerationOptional.isPresent()) { // recent critical deceleration exists
-                            Log.v(CDA, "Vehicle experienced critical deceleration @ " + decelerationOptional.get().getValue() + " m/s^2");
-                            speedEvent = true;
-                            criticalDeceleration = secondaryData.getBufferAcceleration().indexOf(decelerationOptional.get());
-                            Log.v(CDA, "Critical deceleration occurred " + criticalDeceleration.getdT() +" seconds ago");
+                            if (decelerationOptional.isPresent()) { // recent critical deceleration exists
+                                Log.v(CDA, "Vehicle experienced critical deceleration @ " + decelerationOptional.get().getValue() + " m/s^2");
+                                speedEvent = true;
+                                criticalDeceleration = secondaryData.getBufferAcceleration().indexOf(decelerationOptional.get());
+                                Log.v(CDA, "Critical deceleration occurred " + criticalDeceleration.getdT() + " seconds ago");
+                            } else {
+                                Log.v(CDA, "Vehicle did not experience critical deceleration");
+                            }
                         } else {
-                            Log.v(CDA, "Vehicle did not experience critical deceleration");
+                            Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage + " km/h");
                         }
                     } else {
-                        Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage + " km/h");
+                        Log.v(CDA, "Previous vehicle speeds not available.");
                     }
-                }else{
-                    Log.v(CDA, "Previous vehicle speeds not available.");
+                } else {
+                    Log.v(CDA, "Vehicle still moving @ " + currentSpeed + " km/h");
                 }
             }else{
-                Log.v(CDA, "Vehicle still moving @ " + currentSpeed + " km/h");
+                Log.v(CDA, "Vehicle has not moved yet.");
             }
 
             Log.v(CDA, "Analysing g-force parameter"); // used to confirm the critical deceleration
@@ -485,6 +491,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     monitorButton.setTag("running");
                 }else{
                     stop();
+                    if(primaryData != null){
+                        primaryData.clearBuffers();
+                    }
+                    if(secondaryData != null){
+                        secondaryData.clearBuffers();
+                    }
                 }
             }
         });
@@ -547,7 +559,15 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        stop();
+        if(running) {
+            stop();
+            if(primaryData != null){
+                primaryData.clearBuffers();
+            }
+            if(secondaryData != null){
+                secondaryData.clearBuffers();
+            }
+        }
     }
 
     @Override
@@ -576,7 +596,15 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         if (fusedLocationProviderClient != null) {
             fusedLocationProviderClient.removeLocationUpdates(locationCallback);
         }
-        stop();
+        if(running) {
+            stop();
+            if(primaryData != null){
+                primaryData.clearBuffers();
+            }
+            if(secondaryData != null){
+                secondaryData.clearBuffers();
+            }
+        }
     }
 
     private void stop(){
@@ -593,12 +621,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         }
         if(crashDetectionThreadHandler.hasCallbacks(crashDetectionThread)){
             crashDetectionThreadHandler.removeCallbacks(crashDetectionThread);
-        }
-        if(primaryData != null){
-            primaryData.clearBuffers();
-        }
-        if(secondaryData != null){
-            secondaryData.clearBuffers();
         }
         if(manager != null) {
             manager.unregisterListener(sensorListener);
@@ -652,6 +674,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                             sendAlert();
                             mp.stop();
                             dialog.dismiss();
+                            if(primaryData != null){
+                                primaryData.clearBuffers();
+                            }
+                            if(secondaryData != null){
+                                secondaryData.clearBuffers();
+                            }
                         }
                     }
                 }.start();
@@ -663,9 +691,15 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private void sendAlert(){
         User user = ((MainActivity)this.getActivity()).getUser();
         phoneNo = user.getEmergency();
+        String latitude = String.valueOf(newLocation.getLatitude());
+        String longitude = String.valueOf(newLocation.getLongitude());
+        String timestamp = String.valueOf(new Date(newLocation.getTime()));
+        String speed = String.valueOf(Math.floor(primaryData.getBufferSpeed().recent()));
+        String gforce = String.valueOf(primaryData.getBufferGForce().recent());
+
         Log.v(HOME, "Building message for emergency contact: " + phoneNo);
         message = "This is an automated message from BSafe to alert that " + user.getFirstName() +" " + user.getSurname() +
-                        " just experienced a vehicle crash. Please send an emergency response unit to (" + newLocation.getLatitude() +", " + newLocation.getLongitude()+") " +
+                        " just experienced a vehicle crash. Please send an emergency response unit to (" + latitude +", " + longitude +") " +
                         "now and pass them these details about " + user.getFirstName() +": " + "\n" +
                         "Mobile number: " + user.getMobile() + "\n" +
                         "Date of birth: " + user.getDob() + "\n" +
@@ -675,16 +709,19 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         "Bibulous: " + user.getBibulous() + "\n" +
                         "Medical condition: " + user.getMedicalCondition() + "\n" +
                         "Blood type: " + user.getBloodType() + "\n" +
-                        "Last speed: " + Math.floor(primaryData.getBufferSpeed().recent()) + " km/h \n" +
-                        "G-Force experienced: " + primaryData.getBufferGForce().recent() + "\n\n" +
-                        "You received this message because " + user.getFirstName() + " has listed you as an emergency contact in BSafe.";
+                        "Last speed: " + speed + " km/h \n" +
+                        "G-Force experienced: " + gforce + "\n" +
+                        "Time of crash: " + timestamp + "\n" +
+                "You received this message because " + user.getFirstName() + " has listed you as an emergency contact in BSafe.";
 
-            Log.v(HOME, "Sending message to " + phoneNo);
-            SmsManager smsManager = SmsManager.getDefault();
-            ArrayList<String> parts = smsManager.divideMessage(message);
+        Log.v(HOME, "Sending message to " + phoneNo);
+        SmsManager smsManager = SmsManager.getDefault();
+        ArrayList<String> parts = smsManager.divideMessage(message);
 
-            smsManager.sendMultipartTextMessage(phoneNo, null, parts, null, null);
-            Toast.makeText(getContext(), "Alert sent to emergency contact", Toast.LENGTH_LONG).show();
+        smsManager.sendMultipartTextMessage(phoneNo, null, parts, null, null); // sending alert to emergency contact
+        LoginActivity.sql.insertAlert(new Alert(latitude, longitude, timestamp, speed, gforce)); // sending alert to database
+        Toast.makeText(getContext(), "Alert sent to emergency contact", Toast.LENGTH_LONG).show();
+
     }
 
     @Override
