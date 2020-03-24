@@ -86,6 +86,7 @@ import static com.example.cda.utils.Constants.INTERNAL_DATA_BUFFER_SIZE;
 import static com.example.cda.utils.Constants.LOCATION_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MICROPHONE_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MS2KMH;
+import static com.example.cda.utils.Constants.ROTATION_THRESHOLD;
 import static com.example.cda.utils.Constants.SECS2MS;
 import static com.example.cda.utils.Constants.VEHICLE_EMERGENCY_DECELERATION_THRESHOLD;
 import static com.example.cda.utils.Constants.VEHICLE_FIRST_GEAR_SPEED_THRESHOLD;
@@ -142,6 +143,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private Handler crashDetectionThreadHandler;
     private Runnable crashDetectionThread;
+    private String crashEvent = "N/A";
 
     private LocationCallback locationCallback;
 
@@ -247,13 +249,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                             String.valueOf(accelerationTuple.getdT()),
                             String.valueOf(primaryData.getBufferDecibels().recent()),
                             String.valueOf(secondaryData.getBufferDecibelROC().recent()),
-                            "N/A",
+                            crashEvent,
                             String.valueOf(crash),
                             DateFormat.getDateTimeInstance().format(new Date()),
                             String.valueOf(System.currentTimeMillis())
                     });
                 }
-
                 calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
             }
         };
@@ -262,7 +263,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void run() {
                 Log.v(CDA, "Checking if crash occurred...");
-                boolean speedEvent = false, gForceEvent = false;
+                boolean speedEvent = false, gForceEvent = false, rotationEvent = false;
 
                 AccelerationTuple criticalDeceleration = null;
                 if (!primaryData.getBufferSpeed().isEmpty()) {
@@ -274,26 +275,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                                 .stream()
                                 .mapToDouble(Double::doubleValue)
                                 .average();
-                /*double runningAverage = primaryData.getBufferSpeed().previous();
-                if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
-                    Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
 
-                    double deceleration = (currentSpeed/MS2KMH - runningAverage/MS2KMH);
-                    Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
-                    Log.v(CDA, "Acceleration: " + primaryData.getBufferAcceleration());
-                    Log.v(CDA, "Deceleration: " + deceleration);
-                    if (deceleration <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD) { // recent critical deceleration exists
-                        Log.v(CDA, "Vehicle experienced critical deceleration @ " + deceleration + " m/s^2");
-                        speedEvent = true;
-                        criticalDecelerationIndex = primaryData.getBufferAcceleration().indexOf(deceleration);
-                        Log.v(CDA, "Critical Deceleration Index: " + criticalDecelerationIndex);
-
-                    } else {
-                        Log.v(CDA, "Vehicle did not experience critical deceleration");
-                    }
-                } else {
-                    Log.v(CDA, "Vehicle was still previously moving slowly @ ~" + runningAverage + " km/h");
-                }*/
                         if (runningAverageOptional.isPresent()) {
                             double runningAverage = runningAverageOptional.getAsDouble();
                             if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
@@ -327,8 +309,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     Log.v(CDA, "Vehicle has not moved yet.");
                 }
 
-                Log.v(CDA, "Analysing g-force parameter"); // used to confirm the critical deceleration
-                if (criticalDeceleration != null) {
+                if (criticalDeceleration != null) { // used to confirm the critical deceleration
                     Log.v(CDA, "Checking g-force during critical deceleration");
                     if (criticalDeceleration.getdT() > INTERNAL_DATA_BUFFER_SIZE) {
                         Log.v(CDA, "No information available about g-force " + criticalDeceleration.getdT() + " seconds ago");
@@ -341,24 +322,48 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                             Log.v(CDA, "Deceleration confirmed by g-force");
                             gForceEvent = true;
                         } else {
-                            Log.v(CDA, "Vehicle did not experience critical g-force");
+                            Log.v(CDA, "Vehicle did not experience critical g-force during critical deceleration");
                         }
                     }
-                } else {
-                    Log.v(CDA, "Critical deceleration did not occur");
+                }
+
+                double currentRotation = 0;
+                if(!primaryData.getBufferRotation().isEmpty()){
+                    Log.v(CDA, "Analysing resulting rotation parameter");
+                    currentRotation = primaryData.getBufferRotation().recent();
+                    if(currentRotation >= ROTATION_THRESHOLD){
+                        Log.v(CDA, "Vehicle at risk overturning with wheels " + currentRotation + " deg. above ground");
+                        rotationEvent = true;
+                    }
+                }
+
+                if(rotationEvent){ // used to confirm the critical rotation
+                    Log.v(CDA, "Checking g-force during critical rotation");
+                    double gForceDuringRotation = primaryData.getBufferGForce().closestMax(primaryData.getBufferRotation().indexOf(currentRotation).intValue());
+                    Log.v(CDA, "Vehicle experienced " + gForceDuringRotation + " G during critical rotation");
+                    if(gForceDuringRotation >= G_FORCE_THRESHOLD){
+                        Log.v(CDA, "Rotation confirmed by g-force");
+                        gForceEvent = true;
+                    } else{
+                        Log.v(CDA, "Vehicle did not experience critical g-force during critical rotation");
+                    }
+                }
+
+                if(rotationEvent && gForceEvent){
+                    crash = true;
+                    crashEvent = "Overturned";
                 }
 
                 if (speedEvent && gForceEvent) {
                     crash = true;
+                    crashEvent = "Collision";
                 }
-
 
                 if (crash) {
                     SOS();
                 }
 
                 crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
-
             }
         };
 
@@ -549,6 +554,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 }
             }
         });
+
         speedTxt.setOnClickListener(v -> {
             if (newLocation != null) {
                 SOS();
@@ -658,7 +664,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private void stop(){
         running = false;
-        //speedTxt.setText("N/A");
         monitorButton.setText("Start Monitoring");
         monitorButton.setTag("ready");
         statusTxt.setText("Off");
@@ -762,6 +767,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         "Last speed: " + speed + " km/h \n" +
                         "G-Force experienced: " + gforce + "\n" +
                         "Time of crash: " + timestamp + "\n" +
+                        "Type of crash: " + crashEvent + "\n" +
                 "You received this message because " + user.getFirstName() + " has listed you as an emergency contact in BSafe.";
 
         Log.v(HOME, "Sending message to " + phoneNo);

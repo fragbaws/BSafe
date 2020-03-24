@@ -36,7 +36,7 @@ public class Buffer<E> extends ArrayDeque<E> {
         return super.getFirst();
     }
 
-    public AccelerationTuple indexOf(E e){
+    public E indexOf(E e){
         if(super.size() == 0){
             return null;
         }
@@ -46,9 +46,20 @@ public class Buffer<E> extends ArrayDeque<E> {
             while (it.hasNext()) {
                 AccelerationTuple curr = (AccelerationTuple) it.next();
                 if (curr.getValue() == ((AccelerationTuple) e).getValue()) {
-                    return new AccelerationTuple(curr.getValue(), dtTotal);
+                    return (E) new AccelerationTuple(curr.getValue(), dtTotal);
                 }
                 dtTotal += curr.getdT();
+            }
+        }
+        if(e instanceof Double){
+            Iterator it = this.iterator();
+            int index = 0;
+            while(it.hasNext()){
+                double curr = (double) it.next();
+                if(curr == (Double) e){
+                    return (E) Integer.valueOf(index);
+                }
+                index++;
             }
         }
 
