@@ -18,6 +18,8 @@ public class PrimaryData {
         bufferSpeed = new Buffer<>(Constants.EXTERNAL_DATA_BUFFER_SIZE);
         bufferGForce = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
         bufferDecibels = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
+        bufferRotation = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
+
     }
 
     public Buffer<Double> getBufferGForce() { return this.bufferGForce; }

@@ -34,6 +34,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
@@ -68,6 +69,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Optional;
@@ -145,6 +147,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private SensorEventListener sensorListener;
 
+    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_home, container, false);
         speedTxt = root.findViewById(R.id.speed_text);
@@ -162,24 +165,32 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         calculateRateOfChangeThreadHandler = new Handler();
         crashDetectionThreadHandler = new Handler();
 
+
+
+        return root;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
         calculateRunningAverageThread = new Runnable() {
             @Override
             public void run() {
 
                 double averageRotation, averageGForce, averageDecibel;
-                if(!bufferRotation.isEmpty()){
+                if (!bufferRotation.isEmpty()) {
                     averageRotation = calculator.calculateAverage(bufferRotation);
                     primaryData.getBufferRotation().add(averageRotation);
                     bufferRotation.clear();
                 }
 
-                if(!bufferGForce.isEmpty()){
+                if (!bufferGForce.isEmpty()) {
                     averageGForce = calculator.calculateAverage(bufferGForce);
                     primaryData.getBufferGForce().add(averageGForce);
                     bufferGForce.clear();
                 }
 
-                if(!bufferDecibel.isEmpty()){
+                if (!bufferDecibel.isEmpty()) {
                     averageDecibel = calculator.calculateAverage(bufferDecibel);
                     primaryData.getBufferDecibels().add(averageDecibel);
                     bufferDecibel.clear();
@@ -191,7 +202,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 Log.v(PRIMARY_DATA, "Speed" + primaryData.getBufferSpeed());
 
 
-                calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+                calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
             }
         };
         calculateRateOfChangeThread = new Runnable() {
@@ -199,21 +210,21 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             public void run() {
                 double[] gForcePair = null, decibelPair = null;
 
-                if(primaryData.getBufferGForce().size() >= 2) {
+                if (primaryData.getBufferGForce().size() >= 2) {
                     gForcePair = primaryData.getBufferGForce().getRecentPair();
                 }
-                if(primaryData.getBufferDecibels().size() >= 2) {
+                if (primaryData.getBufferDecibels().size() >= 2) {
                     decibelPair = primaryData.getBufferDecibels().getRecentPair();
                 }
 
                 double jerk, decibelROC;
 
-                if(gForcePair != null){
+                if (gForcePair != null) {
                     jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0], 1);
                     secondaryData.getBufferGForceJerk().add(jerk);
                 }
 
-                if(decibelPair != null){
+                if (decibelPair != null) {
                     decibelROC = calculator.calculateRateOfChange(decibelPair[1], decibelPair[0], 1);
                     secondaryData.getBufferDecibelROC().add(decibelROC);
                 }
@@ -222,10 +233,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 Log.v(SECONDARY_DATA, "Decibels ROC" + secondaryData.getBufferDecibelROC());
                 Log.v(SECONDARY_DATA, "Acceleration" + secondaryData.getBufferAcceleration());
 
-                if(dataWriter!=null){
+                if (dataWriter != null) {
                     AccelerationTuple accelerationTuple = secondaryData.getBufferAcceleration().recent();
-                    if(accelerationTuple == null){
-                        accelerationTuple = new AccelerationTuple(0,0);
+                    if (accelerationTuple == null) {
+                        accelerationTuple = new AccelerationTuple(0, 0);
                     }
                     dataWriter.writeNext(new String[]{
                             String.valueOf(primaryData.getBufferRotation().recent()),
@@ -243,7 +254,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     });
                 }
 
-                calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+                calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
             }
         };
         crashDetectionThread = new Runnable() {
@@ -254,7 +265,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 boolean speedEvent = false, gForceEvent = false;
 
                 AccelerationTuple criticalDeceleration = null;
-                if(!primaryData.getBufferSpeed().isEmpty()) {
+                if (!primaryData.getBufferSpeed().isEmpty()) {
                     double currentSpeed = primaryData.getBufferSpeed().recent();
                     Log.v(CDA, "Analysing speed parameter");
                     if (currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle is idle / moving slowly
@@ -312,16 +323,16 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     } else {
                         Log.v(CDA, "Vehicle still moving @ " + currentSpeed + " km/h");
                     }
-                }else{
+                } else {
                     Log.v(CDA, "Vehicle has not moved yet.");
                 }
 
                 Log.v(CDA, "Analysing g-force parameter"); // used to confirm the critical deceleration
-                if(criticalDeceleration != null){
+                if (criticalDeceleration != null) {
                     Log.v(CDA, "Checking g-force during critical deceleration");
-                    if(criticalDeceleration.getdT() > INTERNAL_DATA_BUFFER_SIZE){
+                    if (criticalDeceleration.getdT() > INTERNAL_DATA_BUFFER_SIZE) {
                         Log.v(CDA, "No information available about g-force " + criticalDeceleration.getdT() + " seconds ago");
-                    }else {
+                    } else {
                         Log.v(CDA, "Fetching g-force from " + criticalDeceleration.getdT() + " seconds ago");
 
                         double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(Math.round(criticalDeceleration.getdT()));
@@ -333,20 +344,20 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                             Log.v(CDA, "Vehicle did not experience critical g-force");
                         }
                     }
-                }else{
+                } else {
                     Log.v(CDA, "Critical deceleration did not occur");
                 }
 
-                if(speedEvent && gForceEvent){
+                if (speedEvent && gForceEvent) {
                     crash = true;
                 }
 
 
-                if(crash){
+                if (crash) {
                     SOS();
                 }
 
-                crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS*SECS2MS));
+                crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
 
             }
         };
@@ -354,12 +365,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         sensorListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                if(event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION){
+                if (event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
                     double gforce = calculator.calculateGForce(event.values[0], event.values[1], event.values[2]);
                     bufferGForce.add(gforce);
                 }
                 if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-                    if(prevTimestamp!=0) {
+                    if (prevTimestamp != 0) {
                         double rotation = calculator.calculateRotation(event.values[0],
                                 event.values[1], event.values[2], prevTimestamp, event.timestamp);
                         bufferRotation.add(rotation);
@@ -433,43 +444,45 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     marker = googleMap.addMarker(markerOptions);
                     googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(newLocation.getLatitude(), newLocation.getLongitude()), CLOSE_ZOOM));
 
-                    if(oldLocation != null) { // More than one location is available
+                    if (oldLocation != null) { // More than one location is available
 
-                        if(running) {
-                            float delayBetweenLocations = (float) ((newLocation.getTime() - oldLocation.getTime()) / Constants.SECS2MS);
+                        float delayBetweenLocations = (float) ((newLocation.getTime() - oldLocation.getTime()) / SECS2MS);
 
-                            /** Temporary solution to acceleration being calculated incorrectly **/
-                            if(delayBetweenLocations < 0){ // if negative
-                                delayBetweenLocations = -delayBetweenLocations;
-                            }
-                            if(delayBetweenLocations < 1){ // if a decimal below 1
-                                delayBetweenLocations = 1;
-                            }
-                            if(delayBetweenLocations != Math.round(delayBetweenLocations)){ // if not a whole number
-                                delayBetweenLocations = Math.round(delayBetweenLocations);
-                            }
+                        /** Temporary solution to acceleration being calculated incorrectly **/
+                        if (delayBetweenLocations < 0) { // if negative
+                            delayBetweenLocations = -delayBetweenLocations;
+                        }
+                        if (delayBetweenLocations < 1) { // if a decimal below 1
+                            delayBetweenLocations = 1;
+                        }
+                        if (delayBetweenLocations != Math.round(delayBetweenLocations)) { // if not a whole number
+                            delayBetweenLocations = Math.round(delayBetweenLocations);
+                        }
 
-                            double currentSpeed = calculator.calculateCurrentSpeed(oldLocation, newLocation);
-                            Log.v(SPEED, "Calculating speed between locations");
+                        double currentSpeed = calculator.calculateCurrentSpeed(oldLocation, newLocation);
+                        Log.v(SPEED, "Calculating speed between locations");
+                        Log.v(SPEED, "Current speed: " + currentSpeed + " km/h");
+                        Log.v(SPEED, "Delay between locations: " + delayBetweenLocations + "s");
+
+                        if (currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
+                            speedTxt.setText("<24 km/h");
+                        } else {
+                            speedTxt.setText(String.format("%s km/h", Math.floor(currentSpeed)));
+                        }
+
+                        if (running) {
                             primaryData.getBufferSpeed().add(currentSpeed); // calculate speed between locations
-                            Log.v(SPEED, "Current speed: " + currentSpeed + " km/h");
-                            Log.v(SPEED, "Delay between locations: " + delayBetweenLocations + "s");
-
                             if (primaryData.getBufferSpeed().size() >= 2) { // calculate acceleration between locations
                                 Log.v(SPEED, "Calculating acceleration between locations");
                                 double[] speedPair = primaryData.getBufferSpeed().getRecentPair();
-                                double acceleration = calculator.calculateRateOfChange(speedPair[1]/MS2KMH, speedPair[0]/MS2KMH, delayBetweenLocations);
+                                double acceleration = calculator.calculateRateOfChange(speedPair[1] / MS2KMH, speedPair[0] / MS2KMH, delayBetweenLocations);
                                 AccelerationTuple accTuple = new AccelerationTuple(acceleration, delayBetweenLocations);
                                 secondaryData.getBufferAcceleration().add(accTuple);
                                 Log.v(SPEED, "Acceleration between locations: " + acceleration + " m/s^2");
                             }
                         }
 
-                        if(primaryData.getBufferSpeed().recent() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
-                            speedTxt.setText("<24 km/h");
-                        } else{
-                            speedTxt.setText(String.format("%s km/h", Math.floor(primaryData.getBufferSpeed().recent())));
-                        }
+
                     }
                 }
             }
@@ -478,7 +491,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         sentMessage = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                switch(getResultCode()){
+                switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         Toast.makeText(getContext(), "Alert sent to emergency contact", Toast.LENGTH_LONG).show();
                         break;
@@ -495,7 +508,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         deliveredMessage = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                switch(getResultCode()){
+                switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         Toast.makeText(getContext(), "Alert delivered to emergency contact", Toast.LENGTH_LONG).show();
                         getActivity().unregisterReceiver(sentMessage);
@@ -509,8 +522,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         };
 
         monitorButton.setOnClickListener(v -> {
-            if(v.getId() == monitorButton.getId()){
-                if(monitorButton.getTag().equals("ready")) {
+            if (v.getId() == monitorButton.getId()) {
+                if (monitorButton.getTag().equals("ready")) {
                     Log.v(HOME, "Activating crash detection algorithm...");
                     running = true;
                     setupWriters();
@@ -519,31 +532,31 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
                     startRecording();
                     calculateRunningAverageThreadHandler.postDelayed(calculateRunningAverageThread, 0);
-                    crashDetectionThreadHandler.postDelayed(crashDetectionThread, (long) (LOCATION_INTERVAL_SECS*SECS2MS)); // does not have access to the most up to date ROC values therefore delay is added
-                    calculateRateOfChangeThreadHandler.postDelayed(calculateRateOfChangeThread, (long) (LOCATION_INTERVAL_SECS*SECS2MS*2)); //TODO TimeUnit.SECONDS.toMilis()
+                    crashDetectionThreadHandler.postDelayed(crashDetectionThread, (long) (LOCATION_INTERVAL_SECS * SECS2MS)); // does not have access to the most up to date ROC values therefore delay is added
+                    calculateRateOfChangeThreadHandler.postDelayed(calculateRateOfChangeThread, (long) (LOCATION_INTERVAL_SECS * SECS2MS * 2)); //TODO TimeUnit.SECONDS.toMilis()
 
                     monitorButton.setText("Stop Monitoring");
                     statusTxt.setText("Normal");
                     monitorButton.setTag("running");
-                }else{
+                } else {
                     stop();
-                    if(primaryData != null){
+                    if (primaryData != null) {
                         primaryData.clearBuffers();
                     }
-                    if(secondaryData != null){
+                    if (secondaryData != null) {
                         secondaryData.clearBuffers();
                     }
                 }
             }
         });
         speedTxt.setOnClickListener(v -> {
-            if(newLocation!=null) {
+            if (newLocation != null) {
                 SOS();
             }
         });
-
-        return root;
     }
+
+
 
     private void startRecording() {
         recorder = new MediaRecorder();
