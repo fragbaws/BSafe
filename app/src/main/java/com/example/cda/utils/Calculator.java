@@ -51,13 +51,16 @@ public class Calculator {
 
     }
 
-    public double calculateOmega(float x, float y, float z, float prevTime, float currTime){
+    public double calculateRotation(float x, float y, float z, float prevTime, float currTime){
         float pitch = x;
         float roll = y;
         float yaw = z;
-        double omegaMag = Math.sqrt(pitch*pitch + roll*roll + yaw*yaw); // d0/dt
+        double omegaMag = Math.sqrt(pitch*pitch + roll*roll); // d0/dt
+        double dt = (currTime - prevTime)/Constants.SECS2MS;
 
-        return omegaMag;
+        double rotation = omegaMag * dt * Constants.RAD2D;
+
+        return rotation;
     }
 
     public double calculateRateOfChange(double prevVal, double currVal, float deltaTime){

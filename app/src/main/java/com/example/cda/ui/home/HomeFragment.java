@@ -100,7 +100,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private PrimaryData primaryData;
     private SecondaryData secondaryData;
 
-    private ArrayList<Double> bufferOmega;
+    private ArrayList<Double> bufferRotation;
     private ArrayList<Double> bufferGForce;
     private ArrayList<Double> bufferDecibel;
 
@@ -156,7 +156,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         secondaryData = new SecondaryData();
         bufferDecibel = new ArrayList<>();
         bufferGForce = new ArrayList<>();
-        bufferOmega = new ArrayList<>();
+        bufferRotation = new ArrayList<>();
 
         calculateRunningAverageThreadHandler = new Handler();
         calculateRateOfChangeThreadHandler = new Handler();
@@ -166,11 +166,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void run() {
 
-                double averageOmega, averageGForce, averageDecibel;
-                if(!bufferOmega.isEmpty()){
-                    averageOmega = calculator.calculateAverage(bufferOmega);
-                    primaryData.getBufferOmega().add(averageOmega);
-                    bufferOmega.clear();
+                double averageRotation, averageGForce, averageDecibel;
+                if(!bufferRotation.isEmpty()){
+                    averageRotation = calculator.calculateAverage(bufferRotation);
+                    primaryData.getBufferRotation().add(averageRotation);
+                    bufferRotation.clear();
                 }
 
                 if(!bufferGForce.isEmpty()){
@@ -185,7 +185,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     bufferDecibel.clear();
                 }
 
-                Log.v(PRIMARY_DATA, "Omega" + primaryData.getBufferOmega());
+                Log.v(PRIMARY_DATA, "Rotation" + primaryData.getBufferRotation());
                 Log.v(PRIMARY_DATA, "GForce" + primaryData.getBufferGForce());
                 Log.v(PRIMARY_DATA, "Decibels" + primaryData.getBufferDecibels());
                 Log.v(PRIMARY_DATA, "Speed" + primaryData.getBufferSpeed());
@@ -197,7 +197,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         calculateRateOfChangeThread = new Runnable() {
             @Override
             public void run() {
-                double[] gForcePair = null, decibelPair = null, omegaPair = null;
+                double[] gForcePair = null, decibelPair = null;
 
                 if(primaryData.getBufferGForce().size() >= 2) {
                     gForcePair = primaryData.getBufferGForce().getRecentPair();
@@ -205,16 +205,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 if(primaryData.getBufferDecibels().size() >= 2) {
                     decibelPair = primaryData.getBufferDecibels().getRecentPair();
                 }
-                if(primaryData.getBufferOmega().size() >=2){
-                    omegaPair = primaryData.getBufferOmega().getRecentPair();
-                }
 
-
-                double jerk, decibelROC, angularAcceleration;
-                if(omegaPair != null){
-                    angularAcceleration = calculator.calculateRateOfChange(omegaPair[1], omegaPair[0], 1);
-                    secondaryData.getBufferAngularAcceleration().add(angularAcceleration);
-                }
+                double jerk, decibelROC;
 
                 if(gForcePair != null){
                     jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0], 1);
@@ -226,8 +218,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     secondaryData.getBufferDecibelROC().add(decibelROC);
                 }
 
-
-                Log.v(SECONDARY_DATA, "Angular Acceleration" + secondaryData.getBufferAngularAcceleration());
                 Log.v(SECONDARY_DATA, "Jerk (GForce)" + secondaryData.getBufferGForceJerk());
                 Log.v(SECONDARY_DATA, "Decibels ROC" + secondaryData.getBufferDecibelROC());
                 Log.v(SECONDARY_DATA, "Acceleration" + secondaryData.getBufferAcceleration());
@@ -238,8 +228,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         accelerationTuple = new AccelerationTuple(0,0);
                     }
                     dataWriter.writeNext(new String[]{
-                            String.valueOf(primaryData.getBufferOmega().recent()),
-                            String.valueOf(secondaryData.getBufferAngularAcceleration().recent()),
+                            String.valueOf(primaryData.getBufferRotation().recent()),
                             String.valueOf(primaryData.getBufferGForce().recent()),
                             String.valueOf(secondaryData.getBufferGForceJerk().recent()),
                             String.valueOf(primaryData.getBufferSpeed().recent()),
@@ -371,9 +360,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 }
                 if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
                     if(prevTimestamp!=0) {
-                        double omega = calculator.calculateOmega(event.values[0],
+                        double rotation = calculator.calculateRotation(event.values[0],
                                 event.values[1], event.values[2], prevTimestamp, event.timestamp);
-                        bufferOmega.add(omega);
+                        bufferRotation.add(rotation);
                     }
                     prevTimestamp = event.timestamp;
                 }
@@ -384,26 +373,26 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     triggeredEvent = "1";
                     Log.v(HOME, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
                             "\n Speed: " + primaryData.getCurrentSpeed() + "km/h" +
-                            "\n Omega: " + primaryData.getCurrentOmega() + "°" +
+                            "\n Rotation: " + primaryData.getCurrentRotation() + "°" +
                             "\n dB: " + primaryData.getCurrentDecibels() + "dB");
-                }else if(((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (primaryData.getCurrentOmega()>=Omega_THRESHOLD)) { // hit and vehicle overturned (Omega utilises pitch & roll)
+                }else if(((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (primaryData.getCurrentRotation()>=Rotation_THRESHOLD)) { // hit and vehicle overturned (Rotation utilises pitch & roll)
                     crash = true;
                     triggeredEvent = "2";
                     Log.v(HOME, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
                             "\n Speed: " + primaryData.getCurrentSpeed() + "km/h" +
-                            "\n Omega: " + primaryData.getCurrentOmega() + "°" +
+                            "\n Rotation: " + primaryData.getCurrentRotation() + "°" +
                             "\n dB: " + primaryData.getCurrentDecibels() + "dB");
                 }else if( (primaryData.getCurrentSpeed() < VEHICLE_SPEED_THRESHOLD) && (((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD) + (speedDeviation/STANDARD_DEVIATION_THRESHOLD)) >= LOW_SPEED_ACCIDENT_THRESHOLD)){ // hit while slowly moving
                     crash = true;
                     triggeredEvent = "3";
                     Log.v(HOME, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
                             "\n Speed: " + primaryData.getCurrentSpeed() + "km/h" +
-                            "\n Omega: " + primaryData.getCurrentOmega() + "°" +
+                            "\n Rotation: " + primaryData.getCurrentRotation() + "°" +
                             "\n dB: " + primaryData.getCurrentDecibels() + "dB");
                 }else{
                     crash = false;
                 }
-                dataWriter.writeNext(new String[]{String.valueOf(primaryData.getCurrentOmega()), String.valueOf(primaryData.getCurrentGForce()), String.valueOf(primaryData.getCurrentSpeed()), String.valueOf(primaryData.getCurrentDecibels()), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date()), String.valueOf(System.currentTimeMillis()/SECS2MS)});
+                dataWriter.writeNext(new String[]{String.valueOf(primaryData.getCurrentRotation()), String.valueOf(primaryData.getCurrentGForce()), String.valueOf(primaryData.getCurrentSpeed()), String.valueOf(primaryData.getCurrentDecibels()), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date()), String.valueOf(System.currentTimeMillis()/SECS2MS)});
                 if(crash){
                     SOS();
                 }
@@ -474,12 +463,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                                 secondaryData.getBufferAcceleration().add(accTuple);
                                 Log.v(SPEED, "Acceleration between locations: " + acceleration + " m/s^2");
                             }
+                        }
 
-                            if(primaryData.getBufferSpeed().recent() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
-                                speedTxt.setText("<24 km/h");
-                            } else{
-                                speedTxt.setText(String.format("%s km/h", Math.floor(primaryData.getBufferSpeed().recent())));
-                            }
+                        if(primaryData.getBufferSpeed().recent() <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
+                            speedTxt.setText("<24 km/h");
+                        } else{
+                            speedTxt.setText(String.format("%s km/h", Math.floor(primaryData.getBufferSpeed().recent())));
                         }
                     }
                 }
@@ -535,7 +524,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
                     monitorButton.setText("Stop Monitoring");
                     statusTxt.setText("Normal");
-                    speedTxt.setText("0 km/h");
                     monitorButton.setTag("running");
                 }else{
                     stop();
@@ -657,7 +645,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private void stop(){
         running = false;
-        speedTxt.setText("N/A");
+        //speedTxt.setText("N/A");
         monitorButton.setText("Start Monitoring");
         monitorButton.setTag("ready");
         statusTxt.setText("Off");
@@ -829,8 +817,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 dataWriter = new CSVWriter(new FileWriter(filePath));
             }
             dataWriter.writeNext(new String[]{
-                    "Omega",
-                    "Angular Acceleration",
+                    "Rotation",
                     "G-Force",
                     "Jerk",
                     "Speed",

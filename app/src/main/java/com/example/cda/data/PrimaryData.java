@@ -11,19 +11,18 @@ public class PrimaryData {
 
     /** Records for last 10 second period, each entry is a running average over 1 second **/
     private Buffer<Double> bufferGForce;
-    private Buffer<Double> bufferOmega;
+    private Buffer<Double> bufferRotation;
     private Buffer<Double> bufferDecibels;
 
     public PrimaryData(){
         bufferSpeed = new Buffer<>(Constants.EXTERNAL_DATA_BUFFER_SIZE);
         bufferGForce = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
-        bufferOmega = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
         bufferDecibels = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE);
     }
 
     public Buffer<Double> getBufferGForce() { return this.bufferGForce; }
 
-    public Buffer<Double> getBufferOmega() { return this.bufferOmega; }
+    public Buffer<Double> getBufferRotation() { return this.bufferRotation; }
 
     public Buffer<Double> getBufferDecibels() { return this.bufferDecibels; }
 
@@ -34,7 +33,7 @@ public class PrimaryData {
         this.bufferSpeed.clear();
         this.bufferGForce.clear();
         this.bufferDecibels.clear();
-        this.bufferOmega.clear();
+        this.bufferRotation.clear();
     }
 
 }

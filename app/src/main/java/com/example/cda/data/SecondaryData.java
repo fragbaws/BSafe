@@ -11,24 +11,18 @@ public class SecondaryData {
     private Buffer<AccelerationTuple> bufferAcceleration;
 
     /** Records for last 10 second period, each entry is a running average over 1 second **/
-    private Buffer<Double> bufferAngularAcceleration;
     private Buffer<Double> bufferGForceJerk;
     private Buffer<Double> bufferDecibelROC;
 
 
     public SecondaryData(){
         bufferAcceleration = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
-        bufferAngularAcceleration = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
         bufferGForceJerk = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
         bufferDecibelROC = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
     }
 
     public Buffer<AccelerationTuple> getBufferAcceleration() {
         return bufferAcceleration;
-    }
-
-    public Buffer<Double> getBufferAngularAcceleration() {
-        return bufferAngularAcceleration;
     }
 
     public Buffer<Double> getBufferGForceJerk() {
@@ -41,7 +35,6 @@ public class SecondaryData {
 
     public void clearBuffers(){
         this.bufferAcceleration.clear();
-        this.bufferAngularAcceleration.clear();
         this.bufferDecibelROC.clear();
         this.bufferGForceJerk.clear();
     }

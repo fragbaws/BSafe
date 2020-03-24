@@ -4,9 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,7 +13,6 @@ import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -24,7 +20,6 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.cda.entry.LoginActivity;
 import com.example.cda.entry.User;
-import com.example.cda.ui.home.HomeFragment;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.concurrent.Executor;
@@ -40,9 +35,6 @@ public class MainActivity extends AppCompatActivity {
 
     private MenuItem selectedItem;
     private AppBarConfiguration mAppBarConfiguration;
-
-    private TextView headerName;
-    private TextView headerEmail;
 
     private User user;
 
@@ -63,12 +55,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        View headerView = navigationView.getHeaderView(0);
         user = (User) getIntent().getExtras().getSerializable("user");
-        headerName = headerView.findViewById(R.id.nav_header_name);
-        headerEmail = headerView.findViewById(R.id.nav_header_email);
-        headerName.setText(user.getFirstName() + " " + user.getSurname());
-        headerEmail.setText(user.getEmail());
 
         executor = ContextCompat.getMainExecutor(this);
         biometricPrompt = new BiometricPrompt(MainActivity.this, executor, new BiometricPrompt.AuthenticationCallback() {
