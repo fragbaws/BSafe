@@ -1,4 +1,4 @@
-package com.example.cda.entry;
+package com.example.cda.utils;
 
 import java.io.Serializable;
 

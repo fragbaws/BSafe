@@ -24,8 +24,8 @@
             android:label="@string/title_activity_main_screen"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
-        <activity android:name=".entry.SignupActivity" />
-        <activity android:name=".entry.LoginActivity">
+        <activity android:name=".ui.entry.SignupActivity" />
+        <activity android:name=".ui.entry.LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

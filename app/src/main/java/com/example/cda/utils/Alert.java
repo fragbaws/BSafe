@@ -1,4 +1,4 @@
-package com.example.cda.ui.previous_alerts;
+package com.example.cda.utils;
 
 public class Alert {
 

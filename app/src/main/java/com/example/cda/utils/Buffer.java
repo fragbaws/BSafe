@@ -51,18 +51,6 @@ public class Buffer<E> extends ArrayDeque<E> {
                 dtTotal += curr.getdT();
             }
         }
-        if(e instanceof Double){
-            Iterator it = this.iterator();
-            int index = 0;
-            while(it.hasNext()){
-                double curr = (double) it.next();
-                if(curr == (Double) e){
-                    return (E) Integer.valueOf(index);
-                }
-                index++;
-            }
-        }
-
         return null;
     }
 
@@ -89,4 +77,5 @@ public class Buffer<E> extends ArrayDeque<E> {
 
         return Math.max(prev, Math.max(curr, next));
     }
+
 }

@@ -42,12 +42,11 @@ import com.example.cda.MainActivity;
 import com.example.cda.R;
 import com.example.cda.data.PrimaryData;
 import com.example.cda.data.SecondaryData;
-import com.example.cda.entry.LoginActivity;
-import com.example.cda.entry.User;
-import com.example.cda.ui.previous_alerts.Alert;
+import com.example.cda.ui.entry.LoginActivity;
+import com.example.cda.utils.User;
+import com.example.cda.utils.Alert;
 import com.example.cda.utils.AccelerationTuple;
 import com.example.cda.utils.Calculator;
-import com.example.cda.utils.Constants;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -75,6 +74,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static android.os.Environment.getExternalStorageDirectory;
@@ -90,6 +90,7 @@ import static com.example.cda.utils.Constants.ROTATION_THRESHOLD;
 import static com.example.cda.utils.Constants.SECS2MS;
 import static com.example.cda.utils.Constants.VEHICLE_EMERGENCY_DECELERATION_THRESHOLD;
 import static com.example.cda.utils.Constants.VEHICLE_FIRST_GEAR_SPEED_THRESHOLD;
+import static com.example.cda.utils.Constants.WIGGLE;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback {
     
@@ -103,7 +104,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private PrimaryData primaryData;
     private SecondaryData secondaryData;
 
-    private ArrayList<Double> bufferRotation;
+    private double fixedOrientation;
+    private ArrayList<Double> bufferOrientation; // holds sums of pitch and roll
     private ArrayList<Double> bufferGForce;
     private ArrayList<Double> bufferDecibel;
 
@@ -143,6 +145,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private Handler crashDetectionThreadHandler;
     private Runnable crashDetectionThread;
+
+    private Handler deviceOrientationThreadHandler;
+    private Runnable deviceOrientationThread;
+
     private String crashEvent = "N/A";
 
     private LocationCallback locationCallback;
@@ -161,13 +167,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         secondaryData = new SecondaryData();
         bufferDecibel = new ArrayList<>();
         bufferGForce = new ArrayList<>();
-        bufferRotation = new ArrayList<>();
+        bufferOrientation = new ArrayList<>();
 
         calculateRunningAverageThreadHandler = new Handler();
         calculateRateOfChangeThreadHandler = new Handler();
         crashDetectionThreadHandler = new Handler();
-
-
+        deviceOrientationThreadHandler = new Handler();
 
         return root;
     }
@@ -179,11 +184,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void run() {
 
-                double averageRotation, averageGForce, averageDecibel;
-                if (!bufferRotation.isEmpty()) {
-                    averageRotation = calculator.calculateAverage(bufferRotation);
-                    primaryData.getBufferRotation().add(averageRotation);
-                    bufferRotation.clear();
+                double averageOrientation, averageGForce, averageDecibel;
+                if (!bufferOrientation.isEmpty()) {
+                    averageOrientation = calculator.calculateAverage(bufferOrientation);
+                    primaryData.getBufferOrientation().add(averageOrientation);
+                    bufferOrientation.clear();
                 }
 
                 if (!bufferGForce.isEmpty()) {
@@ -198,7 +203,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     bufferDecibel.clear();
                 }
 
-                Log.v(PRIMARY_DATA, "Rotation" + primaryData.getBufferRotation());
+                Log.v(PRIMARY_DATA, "Orientation" + primaryData.getBufferOrientation());
                 Log.v(PRIMARY_DATA, "GForce" + primaryData.getBufferGForce());
                 Log.v(PRIMARY_DATA, "Decibels" + primaryData.getBufferDecibels());
                 Log.v(PRIMARY_DATA, "Speed" + primaryData.getBufferSpeed());
@@ -241,7 +246,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         accelerationTuple = new AccelerationTuple(0, 0);
                     }
                     dataWriter.writeNext(new String[]{
-                            String.valueOf(primaryData.getBufferRotation().recent()),
+                            String.valueOf(primaryData.getBufferOrientation().recent()),
                             String.valueOf(primaryData.getBufferGForce().recent()),
                             String.valueOf(secondaryData.getBufferGForceJerk().recent()),
                             String.valueOf(primaryData.getBufferSpeed().recent()),
@@ -327,19 +332,22 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     }
                 }
 
-                double currentRotation = 0;
-                if(!primaryData.getBufferRotation().isEmpty()){
-                    Log.v(CDA, "Analysing resulting rotation parameter");
-                    currentRotation = primaryData.getBufferRotation().recent();
-                    if(currentRotation >= ROTATION_THRESHOLD){
-                        Log.v(CDA, "Vehicle at risk overturning with wheels " + currentRotation + " deg. above ground");
+                if(!primaryData.getBufferOrientation().isEmpty()){
+                    Log.v(CDA, "Analysing orientation parameter");
+                    double currentOrientation = primaryData.getBufferOrientation().recent();
+                    double rotation = (fixedOrientation - currentOrientation);
+                    Log.v(CDA, "Vehicle's wheels are raised by " + rotation + " degrees");
+                    if(rotation >= ROTATION_THRESHOLD || rotation <= -ROTATION_THRESHOLD){ // rotation clockwise/anti-clockwise
+                        Log.v(CDA, "Vehicle at risk overturning with wheels " + (rotation < 0 ? -rotation:rotation) + " deg. above ground");
                         rotationEvent = true;
+                    }else{
+                        Log.v(CDA, "Vehicle did not experience a critical rotation");
                     }
                 }
 
                 if(rotationEvent){ // used to confirm the critical rotation
                     Log.v(CDA, "Checking g-force during critical rotation");
-                    double gForceDuringRotation = primaryData.getBufferGForce().closestMax(primaryData.getBufferRotation().indexOf(currentRotation).intValue());
+                    double gForceDuringRotation = primaryData.getBufferGForce().closestMax(0); // gforce && rotation buffers are synced
                     Log.v(CDA, "Vehicle experienced " + gForceDuringRotation + " G during critical rotation");
                     if(gForceDuringRotation >= G_FORCE_THRESHOLD){
                         Log.v(CDA, "Rotation confirmed by g-force");
@@ -367,52 +375,64 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }
         };
 
+        deviceOrientationThread = new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void run() {
+                if(!primaryData.getBufferOrientation().isEmpty()){
+                    if(fixedOrientation == 0){
+                        fixedOrientation = primaryData.getBufferOrientation().recent();
+                        Log.v("ORIENTATION", "Initialised to: " + fixedOrientation);
+
+                    }else{ 
+                        // checking if the fixed position of the device has changed
+                        ArrayList<Double> orientations = new ArrayList<>(primaryData.getBufferOrientation());
+                        int sameElements = 0;
+                       for(int i=0; i<primaryData.getBufferOrientation().size()-1;i++){
+                           double curr = orientations.get(i);
+                           double next = orientations.get(i+1);
+                           if((curr-WIGGLE <= next && curr+WIGGLE >=next) || curr==next){
+                               Log.v("ORIENTATION", "Comparing: " + curr + " " + next);
+                               sameElements++;
+                           }else{
+                               Log.v("ORIENTATION", "Not same: " + curr + " " + next);
+
+                               break;
+                           }
+                       }
+                       if(sameElements==primaryData.getBufferOrientation().size()-1){
+                           fixedOrientation = primaryData.getBufferOrientation().recent();
+                           Log.v("ORIENTATION", "Fixed position changed to " + fixedOrientation);
+                       }
+                    }
+                }
+                deviceOrientationThreadHandler.postDelayed(this, TimeUnit.SECONDS.toMillis(5));
+            }
+        };
+
         sensorListener = new SensorEventListener() {
+            float[] gravityValues;
+            float[] magneticValues;
             @Override
             public void onSensorChanged(SensorEvent event) {
                 if (event.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
                     double gforce = calculator.calculateGForce(event.values[0], event.values[1], event.values[2]);
                     bufferGForce.add(gforce);
                 }
-                if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-                    if (prevTimestamp != 0) {
-                        double rotation = calculator.calculateRotation(event.values[0],
-                                event.values[1], event.values[2], prevTimestamp, event.timestamp);
-                        bufferRotation.add(rotation);
-                    }
-                    prevTimestamp = event.timestamp;
+
+                if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+                    gravityValues = event.values;
                 }
-            /*if(dataWriter!= null){
-               /* String triggeredEvent = "";
-                if(((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (primaryData.getCurrentSpeed()>=VEHICLE_SPEED_THRESHOLD)){ // travelling and hit
-                    crash= true;
-                    triggeredEvent = "1";
-                    Log.v(HOME, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
-                            "\n Speed: " + primaryData.getCurrentSpeed() + "km/h" +
-                            "\n Rotation: " + primaryData.getCurrentRotation() + "°" +
-                            "\n dB: " + primaryData.getCurrentDecibels() + "dB");
-                }else if(((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD)) >= ACCIDENT_THRESHOLD && (primaryData.getCurrentRotation()>=Rotation_THRESHOLD)) { // hit and vehicle overturned (Rotation utilises pitch & roll)
-                    crash = true;
-                    triggeredEvent = "2";
-                    Log.v(HOME, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
-                            "\n Speed: " + primaryData.getCurrentSpeed() + "km/h" +
-                            "\n Rotation: " + primaryData.getCurrentRotation() + "°" +
-                            "\n dB: " + primaryData.getCurrentDecibels() + "dB");
-                }else if( (primaryData.getCurrentSpeed() < VEHICLE_SPEED_THRESHOLD) && (((primaryData.getCurrentGForce()/G_FORCE_THRESHOLD) + (primaryData.getCurrentDecibels()/SOUND_PRESSURE_LEVEL_THRESHOLD) + (speedDeviation/STANDARD_DEVIATION_THRESHOLD)) >= LOW_SPEED_ACCIDENT_THRESHOLD)){ // hit while slowly moving
-                    crash = true;
-                    triggeredEvent = "3";
-                    Log.v(HOME, "Crash occured: " + "("+ newLocation.getLatitude() + "," +newLocation.getLongitude() +")" +
-                            "\n Speed: " + primaryData.getCurrentSpeed() + "km/h" +
-                            "\n Rotation: " + primaryData.getCurrentRotation() + "°" +
-                            "\n dB: " + primaryData.getCurrentDecibels() + "dB");
-                }else{
-                    crash = false;
+                if(event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD){
+                    magneticValues = event.values;
                 }
-                dataWriter.writeNext(new String[]{String.valueOf(primaryData.getCurrentRotation()), String.valueOf(primaryData.getCurrentGForce()), String.valueOf(primaryData.getCurrentSpeed()), String.valueOf(primaryData.getCurrentDecibels()), String.valueOf(crash), triggeredEvent, DateFormat.getDateTimeInstance().format(new Date()), String.valueOf(System.currentTimeMillis()/SECS2MS)});
-                if(crash){
-                    SOS();
+
+                if(gravityValues != null && magneticValues != null){
+                   double orientation = calculator.calculateOrientation(gravityValues, magneticValues);
+                   if(orientation != Double.NEGATIVE_INFINITY) {
+                       bufferOrientation.add(orientation);
+                   }
                 }
-            }*/
             }
 
             @Override
@@ -534,9 +554,13 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     setupWriters();
                     manager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
-                    manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_GAME);
+                    //manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
+                    manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_GAME);
+                    manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
+
                     startRecording();
                     calculateRunningAverageThreadHandler.postDelayed(calculateRunningAverageThread, 0);
+                    deviceOrientationThreadHandler.postDelayed(deviceOrientationThread, 0);
                     crashDetectionThreadHandler.postDelayed(crashDetectionThread, (long) (LOCATION_INTERVAL_SECS * SECS2MS)); // does not have access to the most up to date ROC values therefore delay is added
                     calculateRateOfChangeThreadHandler.postDelayed(calculateRateOfChangeThread, (long) (LOCATION_INTERVAL_SECS * SECS2MS * 2)); //TODO TimeUnit.SECONDS.toMilis()
 
@@ -561,8 +585,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }
         });
     }
-
-
 
     private void startRecording() {
         recorder = new MediaRecorder();

@@ -1,5 +1,6 @@
 package com.example.cda.utils;
 
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.media.MediaRecorder;
 
@@ -51,16 +52,19 @@ public class Calculator {
 
     }
 
-    public double calculateRotation(float x, float y, float z, float prevTime, float currTime){
-        float pitch = x;
-        float roll = y;
-        float yaw = z;
-        double omegaMag = Math.sqrt(pitch*pitch + roll*roll); // d0/dt
-        double dt = (currTime - prevTime)/Constants.SECS2MS;
+    public double calculateOrientation(float[] gravityValues, float[] magneticValues){
+        float R[] = new float[9];
+        float I[] = new float[9];
 
-        double rotation = omegaMag * dt * Constants.RAD2D;
-
-        return rotation;
+        boolean success = SensorManager.getRotationMatrix(R, I, gravityValues, magneticValues);
+        if(success) {
+            float[] orientation = new float[3];
+            SensorManager.getOrientation(R, orientation);
+            orientation[1] = (float) Math.toDegrees(orientation[1]); // pitch
+            orientation[2] = (float) Math.toDegrees(orientation[2]); // roll
+            return orientation[1] + orientation[2];
+        }
+        return Double.NEGATIVE_INFINITY;
     }
 
     public double calculateRateOfChange(double prevVal, double currVal, float deltaTime){

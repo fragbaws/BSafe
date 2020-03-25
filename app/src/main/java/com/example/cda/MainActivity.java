@@ -18,8 +18,8 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-import com.example.cda.entry.LoginActivity;
-import com.example.cda.entry.User;
+import com.example.cda.ui.entry.LoginActivity;
+import com.example.cda.utils.User;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.concurrent.Executor;

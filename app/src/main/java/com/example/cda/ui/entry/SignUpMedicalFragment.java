@@ -1,4 +1,4 @@
-package com.example.cda.entry;
+package com.example.cda.ui.entry;
 
 import androidx.lifecycle.ViewModelProviders;
 
@@ -18,7 +18,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.cda.R;
-import com.github.nikartm.button.FitButton;
+import com.example.cda.utils.User;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 
 public class SignUpMedicalFragment extends Fragment {

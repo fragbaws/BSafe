@@ -1,4 +1,4 @@
-package com.example.cda.entry;
+package com.example.cda.ui.entry;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat;
 import com.example.cda.MainActivity;
 import com.example.cda.R;
 import com.example.cda.db.DBHelper;
+import com.example.cda.utils.User;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -166,6 +167,7 @@ public class LoginActivity extends AppCompatActivity{
 
             for(int i =0; i<grantResults.length;i++){
                 if(grantResults[i] == PackageManager.PERMISSION_DENIED){
+                    Log.v("PERMISSION", permissions[i]);
                     permissionResults.put(permissions[i], grantResults[i]);
                     denied++;
                 }

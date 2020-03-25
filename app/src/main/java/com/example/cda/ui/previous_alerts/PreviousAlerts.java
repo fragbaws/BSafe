@@ -13,7 +13,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.cda.R;
-import com.example.cda.entry.LoginActivity;
+import com.example.cda.ui.entry.LoginActivity;
+import com.example.cda.utils.Alert;
 
 import java.util.ArrayList;
 

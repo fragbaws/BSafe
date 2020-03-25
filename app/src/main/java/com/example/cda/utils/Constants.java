@@ -26,13 +26,14 @@ public class Constants {
 
     
     /*Thresholds*/
-    public static final int ACCIDENT_THRESHOLD = 1;
-    public static final int LOW_SPEED_ACCIDENT_THRESHOLD = 3;
     public static final int G_FORCE_THRESHOLD = 4;
     public static final double STANDARD_DEVIATION_THRESHOLD = 2.06;
     public static final int SOUND_PRESSURE_LEVEL_THRESHOLD = 140;
-    public static final int ROTATION_THRESHOLD = 45;
+    public static final int ROTATION_THRESHOLD = 20;
     public static final int VEHICLE_FIRST_GEAR_SPEED_THRESHOLD = 24;
     public static final double VEHICLE_EMERGENCY_DECELERATION_THRESHOLD = -7.5;
+
+    /*General*/
+    public static final int WIGGLE = 1;
 
 }

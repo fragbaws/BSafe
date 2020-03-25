@@ -6,8 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.example.cda.entry.User;
-import com.example.cda.ui.previous_alerts.Alert;
+import com.example.cda.utils.User;
+import com.example.cda.utils.Alert;
 
 import java.util.ArrayList;
 
