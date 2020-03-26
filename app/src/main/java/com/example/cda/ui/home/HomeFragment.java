@@ -129,9 +129,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private Handler calculateRunningAverageThreadHandler;
     private Runnable calculateRunningAverageThread;
 
-    private Handler calculateRateOfChangeThreadHandler;
-    private Runnable calculateRateOfChangeThread;
-
     private Handler crashDetectionThreadHandler;
     private Runnable crashDetectionThread;
 
@@ -158,7 +155,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         bufferOrientation = new ArrayList<>();
 
         calculateRunningAverageThreadHandler = new Handler();
-        calculateRateOfChangeThreadHandler = new Handler();
         crashDetectionThreadHandler = new Handler();
         deviceOrientationThreadHandler = new Handler();
 
@@ -188,20 +184,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 Log.v(PRIMARY_DATA, "Orientation" + primaryData.getBufferOrientation());
                 Log.v(PRIMARY_DATA, "GForce" + primaryData.getBufferGForce());
                 Log.v(PRIMARY_DATA, "Speed" + primaryData.getBufferSpeed());
-
-
-                calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
-            }
-        };
-        calculateRateOfChangeThread = new Runnable() {
-            @Override
-            public void run() {
-                double[] gForcePair = null;
-
-                if (primaryData.getBufferGForce().size() >= 2) {
-                    gForcePair = primaryData.getBufferGForce().getRecentPair();
-                }
-
                 Log.v(SECONDARY_DATA, "Acceleration" + secondaryData.getBufferAcceleration());
 
                 if (dataWriter != null) {
@@ -221,9 +203,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                             String.valueOf(System.currentTimeMillis())
                     });
                 }
-                calculateRateOfChangeThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
+
+
+                calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
             }
         };
+
         crashDetectionThread = new Runnable() {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
@@ -521,7 +506,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     calculateRunningAverageThreadHandler.postDelayed(calculateRunningAverageThread, 0);
                     deviceOrientationThreadHandler.postDelayed(deviceOrientationThread, 0);
                     crashDetectionThreadHandler.postDelayed(crashDetectionThread, (long) (LOCATION_INTERVAL_SECS * SECS2MS)); // does not have access to the most up to date ROC values therefore delay is added
-                    calculateRateOfChangeThreadHandler.postDelayed(calculateRateOfChangeThread, (long) (LOCATION_INTERVAL_SECS * SECS2MS * 2)); //TODO TimeUnit.SECONDS.toMilis()
 
                     monitorButton.setText("Stop Monitoring");
                     statusTxt.setText("Normal");
@@ -626,9 +610,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
         if(calculateRunningAverageThreadHandler.hasCallbacks(calculateRunningAverageThread)){
             calculateRunningAverageThreadHandler.removeCallbacks(calculateRunningAverageThread);
-        }
-        if(calculateRateOfChangeThreadHandler.hasCallbacks(calculateRateOfChangeThread)){
-            calculateRateOfChangeThreadHandler.removeCallbacks(calculateRateOfChangeThread);
         }
         if(crashDetectionThreadHandler.hasCallbacks(crashDetectionThread)){
             crashDetectionThreadHandler.removeCallbacks(crashDetectionThread);
