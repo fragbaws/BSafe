@@ -10,33 +10,16 @@ public class SecondaryData {
      * is calculated with each location callback which can have a delay of >=1 second **/
     private Buffer<AccelerationTuple> bufferAcceleration;
 
-    /** Records for last 10 second period, each entry is a running average over 1 second **/
-    private Buffer<Double> bufferGForceJerk;
-    private Buffer<Double> bufferDecibelROC;
-
-
     public SecondaryData(){
         bufferAcceleration = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
-        bufferGForceJerk = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
-        bufferDecibelROC = new Buffer<>(Constants.INTERNAL_DATA_BUFFER_SIZE-1);
     }
 
     public Buffer<AccelerationTuple> getBufferAcceleration() {
         return bufferAcceleration;
     }
 
-    public Buffer<Double> getBufferGForceJerk() {
-        return bufferGForceJerk;
-    }
-
-    public Buffer<Double> getBufferDecibelROC() {
-        return bufferDecibelROC;
-    }
-
     public void clearBuffers(){
         this.bufferAcceleration.clear();
-        this.bufferDecibelROC.clear();
-        this.bufferGForceJerk.clear();
     }
 
 }

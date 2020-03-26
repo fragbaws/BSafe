@@ -31,22 +31,6 @@ public class Calculator {
         return (speed*Constants.MS2KMH);
     }
 
-
-    public double calculateDecibels(MediaRecorder recorder){
-        if(recorder != null){
-            float maxAmplitude = recorder.getMaxAmplitude();
-            float db = (float) (20 * Math.log10(maxAmplitude));// / 32767.0f));
-            if(db < 0 || Double.isInfinite(db) || Double.isNaN(db)){
-                return 0.0;
-            }else {
-                return db;
-            }
-        }
-        else{
-            return 0.0;
-        }
-    }
-
     public double calculateGForce(double x, double y, double z){
         return Math.sqrt(x*x + y*y + z*z)/(Constants.GRAVITY_CONSTANT);
 

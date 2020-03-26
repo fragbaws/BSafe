@@ -15,7 +15,6 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
-import android.media.MediaRecorder;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -43,10 +42,10 @@ import com.example.cda.R;
 import com.example.cda.data.PrimaryData;
 import com.example.cda.data.SecondaryData;
 import com.example.cda.ui.entry.LoginActivity;
-import com.example.cda.utils.User;
-import com.example.cda.utils.Alert;
 import com.example.cda.utils.AccelerationTuple;
+import com.example.cda.utils.Alert;
 import com.example.cda.utils.Calculator;
+import com.example.cda.utils.User;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -68,13 +67,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static android.os.Environment.getExternalStorageDirectory;
@@ -84,7 +81,6 @@ import static com.example.cda.utils.Constants.COUNT_DOWN_INTERVAL_MILLIS;
 import static com.example.cda.utils.Constants.G_FORCE_THRESHOLD;
 import static com.example.cda.utils.Constants.INTERNAL_DATA_BUFFER_SIZE;
 import static com.example.cda.utils.Constants.LOCATION_INTERVAL_SECS;
-import static com.example.cda.utils.Constants.MICROPHONE_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MS2KMH;
 import static com.example.cda.utils.Constants.ROTATION_THRESHOLD;
 import static com.example.cda.utils.Constants.SECS2MS;
@@ -107,21 +103,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     private double fixedOrientation;
     private ArrayList<Double> bufferOrientation; // holds sums of pitch and roll
     private ArrayList<Double> bufferGForce;
-    private ArrayList<Double> bufferDecibel;
 
-    private SupportMapFragment mapFragment;
     private GoogleMap googleMap;
-    private LocationRequest locationRequest;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private Marker marker;
     private Location oldLocation;
     private Location newLocation;
 
     private SensorManager manager;
-    private float prevTimestamp;
-
-    private MediaRecorder recorder;
-    private String audioName;
 
     private Button monitorButton;
     private TextView speedTxt;
@@ -165,7 +154,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
         primaryData = new PrimaryData();
         secondaryData = new SecondaryData();
-        bufferDecibel = new ArrayList<>();
         bufferGForce = new ArrayList<>();
         bufferOrientation = new ArrayList<>();
 
@@ -184,7 +172,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void run() {
 
-                double averageOrientation, averageGForce, averageDecibel;
+                double averageOrientation, averageGForce;
                 if (!bufferOrientation.isEmpty()) {
                     averageOrientation = calculator.calculateAverage(bufferOrientation);
                     primaryData.getBufferOrientation().add(averageOrientation);
@@ -197,15 +185,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     bufferGForce.clear();
                 }
 
-                if (!bufferDecibel.isEmpty()) {
-                    averageDecibel = calculator.calculateAverage(bufferDecibel);
-                    primaryData.getBufferDecibels().add(averageDecibel);
-                    bufferDecibel.clear();
-                }
-
                 Log.v(PRIMARY_DATA, "Orientation" + primaryData.getBufferOrientation());
                 Log.v(PRIMARY_DATA, "GForce" + primaryData.getBufferGForce());
-                Log.v(PRIMARY_DATA, "Decibels" + primaryData.getBufferDecibels());
                 Log.v(PRIMARY_DATA, "Speed" + primaryData.getBufferSpeed());
 
 
@@ -215,29 +196,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         calculateRateOfChangeThread = new Runnable() {
             @Override
             public void run() {
-                double[] gForcePair = null, decibelPair = null;
+                double[] gForcePair = null;
 
                 if (primaryData.getBufferGForce().size() >= 2) {
                     gForcePair = primaryData.getBufferGForce().getRecentPair();
                 }
-                if (primaryData.getBufferDecibels().size() >= 2) {
-                    decibelPair = primaryData.getBufferDecibels().getRecentPair();
-                }
 
-                double jerk, decibelROC;
-
-                if (gForcePair != null) {
-                    jerk = calculator.calculateRateOfChange(gForcePair[1], gForcePair[0], 1);
-                    secondaryData.getBufferGForceJerk().add(jerk);
-                }
-
-                if (decibelPair != null) {
-                    decibelROC = calculator.calculateRateOfChange(decibelPair[1], decibelPair[0], 1);
-                    secondaryData.getBufferDecibelROC().add(decibelROC);
-                }
-
-                Log.v(SECONDARY_DATA, "Jerk (GForce)" + secondaryData.getBufferGForceJerk());
-                Log.v(SECONDARY_DATA, "Decibels ROC" + secondaryData.getBufferDecibelROC());
                 Log.v(SECONDARY_DATA, "Acceleration" + secondaryData.getBufferAcceleration());
 
                 if (dataWriter != null) {
@@ -246,14 +210,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         accelerationTuple = new AccelerationTuple(0, 0);
                     }
                     dataWriter.writeNext(new String[]{
-                            String.valueOf(primaryData.getBufferOrientation().recent()),
+                            String.valueOf(fixedOrientation - primaryData.getBufferOrientation().recent()),
                             String.valueOf(primaryData.getBufferGForce().recent()),
-                            String.valueOf(secondaryData.getBufferGForceJerk().recent()),
                             String.valueOf(primaryData.getBufferSpeed().recent()),
                             String.valueOf(accelerationTuple.getValue()),
                             String.valueOf(accelerationTuple.getdT()),
-                            String.valueOf(primaryData.getBufferDecibels().recent()),
-                            String.valueOf(secondaryData.getBufferDecibelROC().recent()),
                             crashEvent,
                             String.valueOf(crash),
                             DateFormat.getDateTimeInstance().format(new Date()),
@@ -554,11 +515,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     setupWriters();
                     manager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
-                    //manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_GAME);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
 
-                    startRecording();
                     calculateRunningAverageThreadHandler.postDelayed(calculateRunningAverageThread, 0);
                     deviceOrientationThreadHandler.postDelayed(deviceOrientationThread, 0);
                     crashDetectionThreadHandler.postDelayed(crashDetectionThread, (long) (LOCATION_INTERVAL_SECS * SECS2MS)); // does not have access to the most up to date ROC values therefore delay is added
@@ -584,31 +543,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 SOS();
             }
         });
-    }
-
-    private void startRecording() {
-        recorder = new MediaRecorder();
-        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-        recorder.setOutputFile(audioName);
-
-        try {
-            recorder.prepare();
-        } catch (IOException e) {
-            Log.v(HOME, "Recording failed");
-        }
-
-        recorder.start();
-        final Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                double dB = calculator.calculateDecibels(recorder);
-                bufferDecibel.add(dB);
-                handler.postDelayed(this, (long) (MICROPHONE_INTERVAL_SECS*SECS2MS)); //20ms caused alot of -Infinity values (rubbish values)
-            }
-        }, 0);
     }
 
     private void isLocationServiceEnabled(){
@@ -654,7 +588,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         if(fusedLocationProviderClient != null){
             requestLocation();
         }else {
-            mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+            SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
             fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
             if (mapFragment != null) {
                 mapFragment.getMapAsync(this);
@@ -701,11 +635,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         }
         if(manager != null) {
             manager.unregisterListener(sensorListener);
-        }
-        if(recorder!=null) {
-            recorder.stop();
-            recorder.release();
-            recorder = null;
         }
         try {
             if(dataWriter != null) {
@@ -829,11 +758,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void requestLocation() {
-        locationRequest = new LocationRequest();
+        LocationRequest locationRequest = new LocationRequest();
         locationRequest.setInterval((long) (LOCATION_INTERVAL_SECS*SECS2MS));
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
-        //googleMap.setMyLocationEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(false);
         googleMap.setIndoorEnabled(false);
         googleMap.setTrafficEnabled(true);
@@ -841,7 +769,6 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void setupWriters(){
-        audioName = getActivity().getExternalCacheDir().getAbsolutePath() + "/audiorecordtest.3gp";
         String baseDir = getExternalStorageDirectory().getAbsolutePath();
         String fileName = "crash_data.csv";
         String filePath = baseDir + File.separator + fileName;
@@ -860,12 +787,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             dataWriter.writeNext(new String[]{
                     "Rotation",
                     "G-Force",
-                    "Jerk",
                     "Speed",
                     "Acceleration",
                     "dT",
-                    "dB",
-                    "dB Delta",
                     "Case",
                     "Crash",
                     "Timestamp",
