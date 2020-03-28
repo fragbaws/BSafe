@@ -186,26 +186,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 Log.v(PRIMARY_DATA, "Speed" + primaryData.getBufferSpeed());
                 Log.v(SECONDARY_DATA, "Acceleration" + secondaryData.getBufferAcceleration());
 
-                if (dataWriter != null) {
-                    AccelerationTuple accelerationTuple = secondaryData.getBufferAcceleration().recent();
-                    if (accelerationTuple == null) {
-                        accelerationTuple = new AccelerationTuple(0, 0);
-                    }
-                    dataWriter.writeNext(new String[]{
-                            String.valueOf(fixedOrientation - primaryData.getBufferOrientation().recent()),
-                            String.valueOf(primaryData.getBufferGForce().recent()),
-                            String.valueOf(primaryData.getBufferSpeed().recent()),
-                            String.valueOf(accelerationTuple.getValue()),
-                            String.valueOf(accelerationTuple.getdT()),
-                            crashEvent,
-                            String.valueOf(crash),
-                            DateFormat.getDateTimeInstance().format(new Date()),
-                            String.valueOf(System.currentTimeMillis())
-                    });
+
+                if(!crash) {
+                    calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
                 }
-
-
-                calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
             }
         };
 
@@ -313,11 +297,29 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     crashEvent = "Collision";
                 }
 
-                if (crash) {
-                    SOS();
+                if (dataWriter != null) {
+                    AccelerationTuple accelerationTuple = secondaryData.getBufferAcceleration().recent();
+                    if (accelerationTuple == null) {
+                        accelerationTuple = new AccelerationTuple(0, 0);
+                    }
+                    dataWriter.writeNext(new String[]{
+                            String.valueOf(fixedOrientation - primaryData.getBufferOrientation().recent()),
+                            String.valueOf(primaryData.getBufferGForce().recent()),
+                            String.valueOf(primaryData.getBufferSpeed().recent()),
+                            String.valueOf(accelerationTuple.getValue()),
+                            String.valueOf(accelerationTuple.getdT()),
+                            crashEvent,
+                            String.valueOf(crash),
+                            DateFormat.getDateTimeInstance().format(new Date()),
+                            String.valueOf(System.currentTimeMillis())
+                    });
                 }
 
-                crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
+                if (crash) {
+                    SOS();
+                }else {
+                    crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
+                }
             }
         };
 
@@ -352,7 +354,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                        }
                     }
                 }
-                deviceOrientationThreadHandler.postDelayed(this, TimeUnit.SECONDS.toMillis(5));
+
+                if(!crash) {
+                    deviceOrientationThreadHandler.postDelayed(this, TimeUnit.SECONDS.toMillis(5));
+                }
             }
         };
 
@@ -482,6 +487,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         Toast.makeText(getContext(), "Alert delivered to emergency contact", Toast.LENGTH_LONG).show();
+                        crash = false;
                         getActivity().unregisterReceiver(sentMessage);
                         getActivity().unregisterReceiver(deliveredMessage);
                         break;
@@ -607,12 +613,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         monitorButton.setText("Start Monitoring");
         monitorButton.setTag("ready");
         statusTxt.setText("Off");
-
         if(calculateRunningAverageThreadHandler.hasCallbacks(calculateRunningAverageThread)){
             calculateRunningAverageThreadHandler.removeCallbacks(calculateRunningAverageThread);
         }
         if(crashDetectionThreadHandler.hasCallbacks(crashDetectionThread)){
             crashDetectionThreadHandler.removeCallbacks(crashDetectionThread);
+        }
+        if(deviceOrientationThreadHandler.hasCallbacks(deviceOrientationThread)){
+            deviceOrientationThreadHandler.removeCallbacks(deviceOrientationThread);
         }
         if(manager != null) {
             manager.unregisterListener(sensorListener);
@@ -681,7 +689,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         String latitude = String.valueOf(newLocation.getLatitude());
         String longitude = String.valueOf(newLocation.getLongitude());
         String timestamp = String.valueOf(new Date(newLocation.getTime()));
-        String speed = String.valueOf(Math.floor(primaryData.getBufferSpeed().recent()));
+        String speed = String.valueOf(Math.floor(primaryData.getBufferSpeed().isEmpty() ? 0 : primaryData.getBufferSpeed().recent()));
         String gforce = String.valueOf(primaryData.getBufferGForce().recent());
 
         Log.v(HOME, "Building message for emergency contact: " + phoneNo);

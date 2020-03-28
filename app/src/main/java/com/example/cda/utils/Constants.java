@@ -25,6 +25,9 @@ public class Constants {
     public static final int ROTATION_THRESHOLD = 20;
     public static final int VEHICLE_FIRST_GEAR_SPEED_THRESHOLD = 24;
     public static final double VEHICLE_EMERGENCY_DECELERATION_THRESHOLD = -7.5;
+/*
+    public static final double VEHICLE_EMERGENCY_DECELERATION_THRESHOLD = -3.0;
+    public static final double G_FORCE_THRESHOLD = 1.0;*/
 
     /*General*/
     public static final int WIGGLE = 5;
