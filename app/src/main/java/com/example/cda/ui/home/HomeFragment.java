@@ -125,6 +125,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
     private BroadcastReceiver sentMessage;
     private BroadcastReceiver deliveredMessage;
+    private Handler repeatSendMessageThreadHandler;
+    private Runnable repeatSendMessageThread;
 
     private Handler calculateRunningAverageThreadHandler;
     private Runnable calculateRunningAverageThread;
@@ -157,6 +159,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         calculateRunningAverageThreadHandler = new Handler();
         crashDetectionThreadHandler = new Handler();
         deviceOrientationThreadHandler = new Handler();
+        repeatSendMessageThreadHandler = new Handler();
 
         return root;
     }
@@ -302,10 +305,29 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     if (accelerationTuple == null) {
                         accelerationTuple = new AccelerationTuple(0, 0);
                     }
+                    double currOrientation, speed, gforce;
+                    if(primaryData.getBufferOrientation().isEmpty()){
+                        currOrientation = 0;
+                    }else{
+                        currOrientation = primaryData.getBufferOrientation().recent();
+                    }
+
+                    if(primaryData.getBufferSpeed().isEmpty()){
+                        speed = 0;
+                    }else{
+                        speed = primaryData.getBufferOrientation().recent();
+                    }
+
+                    if(primaryData.getBufferGForce().isEmpty()){
+                        gforce = 0;
+                    }else{
+                        gforce = primaryData.getBufferGForce().recent();
+                    }
+
                     dataWriter.writeNext(new String[]{
-                            String.valueOf(fixedOrientation - primaryData.getBufferOrientation().recent()),
-                            String.valueOf(primaryData.getBufferGForce().recent()),
-                            String.valueOf(primaryData.getBufferSpeed().recent()),
+                            String.valueOf(fixedOrientation - currOrientation),
+                            String.valueOf(gforce),
+                            String.valueOf(speed),
                             String.valueOf(accelerationTuple.getValue()),
                             String.valueOf(accelerationTuple.getdT()),
                             crashEvent,
@@ -358,6 +380,15 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 if(!crash) {
                     deviceOrientationThreadHandler.postDelayed(this, TimeUnit.SECONDS.toMillis(5));
                 }
+            }
+        };
+
+        repeatSendMessageThread = new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getContext(), "Trying to send SMS again", Toast.LENGTH_LONG).show();
+                sendSMS();
+                repeatSendMessageThreadHandler.postDelayed(this, TimeUnit.SECONDS.toMillis(30));
             }
         };
 
@@ -475,7 +506,9 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     case SmsManager.RESULT_ERROR_NO_SERVICE:
                     case SmsManager.RESULT_ERROR_NULL_PDU:
                     case SmsManager.RESULT_ERROR_RADIO_OFF:
-                        sendSMS();
+                        if(!repeatSendMessageThreadHandler.hasCallbacks(repeatSendMessageThread)){
+                            repeatSendMessageThreadHandler.postDelayed(repeatSendMessageThread, 0);
+                        }
                         break;
                 }
             }
@@ -490,9 +523,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         crash = false;
                         getActivity().unregisterReceiver(sentMessage);
                         getActivity().unregisterReceiver(deliveredMessage);
+                        if(repeatSendMessageThreadHandler.hasCallbacks(repeatSendMessageThread)){
+                            repeatSendMessageThreadHandler.removeCallbacks(repeatSendMessageThread);
+                        }
                         break;
                     case Activity.RESULT_CANCELED:
-                        sendSMS();
+                        if(!repeatSendMessageThreadHandler.hasCallbacks(repeatSendMessageThread)){
+                            repeatSendMessageThreadHandler.postDelayed(repeatSendMessageThread, 0);
+                        }
                         break;
                 }
             }
