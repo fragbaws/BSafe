@@ -1,7 +1,7 @@
-package com.example.cda.data;
+package com.example.bsafe.data;
 
-import com.example.cda.utils.Buffer;
-import com.example.cda.utils.Constants;
+import com.example.bsafe.utils.Buffer;
+import com.example.bsafe.utils.Constants;
 
 public class PrimaryData {
 

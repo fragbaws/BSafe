@@ -1,6 +1,4 @@
-package com.example.cda.ui.entry;
-
-import androidx.lifecycle.ViewModelProviders;
+package com.example.bsafe.ui.entry;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -17,8 +15,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.cda.R;
-import com.example.cda.utils.User;
+import com.example.bsafe.R;
+import com.example.bsafe.utils.User;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 
 import java.util.concurrent.TimeUnit;

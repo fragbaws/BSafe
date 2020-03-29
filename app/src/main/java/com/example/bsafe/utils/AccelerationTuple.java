@@ -1,4 +1,4 @@
-package com.example.cda.utils;
+package com.example.bsafe.utils;
 
 /** Used to keep track of the delay between each location for more accurate acceleration calculation**/
 public class AccelerationTuple {

@@ -1,4 +1,4 @@
-package com.example.cda.ui.entry;
+package com.example.bsafe.ui.entry;
 
 import android.Manifest;
 import android.app.AlertDialog;
@@ -17,10 +17,10 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import com.example.cda.ui.MainActivity;
-import com.example.cda.R;
-import com.example.cda.db.DBHelper;
-import com.example.cda.utils.User;
+import com.example.bsafe.ui.MainActivity;
+import com.example.bsafe.R;
+import com.example.bsafe.db.DBHelper;
+import com.example.bsafe.utils.User;
 
 import java.util.ArrayList;
 import java.util.HashMap;

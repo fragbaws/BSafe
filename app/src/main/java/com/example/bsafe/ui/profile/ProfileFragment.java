@@ -1,4 +1,4 @@
-package com.example.cda.ui.profile;
+package com.example.bsafe.ui.profile;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,9 +10,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.example.cda.ui.MainActivity;
-import com.example.cda.R;
-import com.example.cda.utils.User;
+import com.example.bsafe.ui.MainActivity;
+import com.example.bsafe.R;
+import com.example.bsafe.utils.User;
 
 public class ProfileFragment extends Fragment {
 

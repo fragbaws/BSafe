@@ -1,4 +1,4 @@
-package com.example.cda.ui.previous_alerts;
+package com.example.bsafe.ui.previous_alerts;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,11 +10,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
 
-import com.example.cda.R;
-import com.example.cda.ui.entry.LoginActivity;
-import com.example.cda.utils.Alert;
+import com.example.bsafe.R;
+import com.example.bsafe.ui.entry.LoginActivity;
+import com.example.bsafe.utils.Alert;
 
 import java.util.ArrayList;
 

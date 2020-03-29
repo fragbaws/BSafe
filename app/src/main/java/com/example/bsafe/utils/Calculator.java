@@ -1,8 +1,7 @@
-package com.example.cda.utils;
+package com.example.bsafe.utils;
 
 import android.hardware.SensorManager;
 import android.location.Location;
-import android.media.MediaRecorder;
 
 import java.util.List;
 

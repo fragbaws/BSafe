@@ -1,4 +1,4 @@
-package com.example.cda.ui.entry;
+package com.example.bsafe.ui.entry;
 
 import android.os.Bundle;
 import android.widget.Button;
@@ -8,8 +8,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.example.cda.R;
-import com.example.cda.utils.User;
+import com.example.bsafe.R;
+import com.example.bsafe.utils.User;
 
 public class SignupActivity extends AppCompatActivity {
 

@@ -1,4 +1,4 @@
-package com.example.cda;
+package com.example.bsafe;
 
 import org.junit.Test;
 

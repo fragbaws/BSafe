@@ -1,4 +1,4 @@
-package com.example.cda.ui;
+package com.example.bsafe.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -18,9 +18,9 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-import com.example.cda.R;
-import com.example.cda.ui.entry.LoginActivity;
-import com.example.cda.utils.User;
+import com.example.bsafe.R;
+import com.example.bsafe.ui.entry.LoginActivity;
+import com.example.bsafe.utils.User;
 import com.google.android.material.navigation.NavigationView;
 
 import java.util.concurrent.Executor;

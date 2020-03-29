@@ -1,4 +1,4 @@
-package com.example.cda.utils;
+package com.example.bsafe.utils;
 
 /** Used to easily send MSD into the database **/
 public class Alert {

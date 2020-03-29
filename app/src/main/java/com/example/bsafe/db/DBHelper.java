@@ -1,4 +1,4 @@
-package com.example.cda.db;
+package com.example.bsafe.db;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -6,8 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.example.cda.utils.User;
-import com.example.cda.utils.Alert;
+import com.example.bsafe.utils.User;
+import com.example.bsafe.utils.Alert;
 
 import java.util.ArrayList;
 

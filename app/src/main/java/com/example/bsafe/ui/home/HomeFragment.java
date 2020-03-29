@@ -1,4 +1,4 @@
-package com.example.cda.ui.home;
+package com.example.bsafe.ui.home;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -36,15 +36,15 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
-import com.example.cda.ui.MainActivity;
-import com.example.cda.R;
-import com.example.cda.data.PrimaryData;
-import com.example.cda.data.SecondaryData;
-import com.example.cda.ui.entry.LoginActivity;
-import com.example.cda.utils.AccelerationTuple;
-import com.example.cda.utils.Alert;
-import com.example.cda.utils.Calculator;
-import com.example.cda.utils.User;
+import com.example.bsafe.ui.MainActivity;
+import com.example.bsafe.R;
+import com.example.bsafe.data.PrimaryData;
+import com.example.bsafe.data.SecondaryData;
+import com.example.bsafe.ui.entry.LoginActivity;
+import com.example.bsafe.utils.AccelerationTuple;
+import com.example.bsafe.utils.Alert;
+import com.example.bsafe.utils.Calculator;
+import com.example.bsafe.utils.User;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -74,15 +74,15 @@ import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static android.os.Environment.getExternalStorageDirectory;
-import static com.example.cda.utils.Constants.CLOSE_ZOOM;
-import static com.example.cda.utils.Constants.G_FORCE_THRESHOLD;
-import static com.example.cda.utils.Constants.INTERNAL_DATA_BUFFER_SIZE;
-import static com.example.cda.utils.Constants.MS2KMH;
-import static com.example.cda.utils.Constants.ROTATION_THRESHOLD;
-import static com.example.cda.utils.Constants.SECS2MS;
-import static com.example.cda.utils.Constants.EMERGENCY_DECELERATION_THRESHOLD;
-import static com.example.cda.utils.Constants.FIRST_GEAR_SPEED_THRESHOLD;
-import static com.example.cda.utils.Constants.WIGGLE;
+import static com.example.bsafe.utils.Constants.CLOSE_ZOOM;
+import static com.example.bsafe.utils.Constants.G_FORCE_THRESHOLD;
+import static com.example.bsafe.utils.Constants.INTERNAL_DATA_BUFFER_SIZE;
+import static com.example.bsafe.utils.Constants.MS2KMH;
+import static com.example.bsafe.utils.Constants.ROTATION_THRESHOLD;
+import static com.example.bsafe.utils.Constants.SECS2MS;
+import static com.example.bsafe.utils.Constants.EMERGENCY_DECELERATION_THRESHOLD;
+import static com.example.bsafe.utils.Constants.FIRST_GEAR_SPEED_THRESHOLD;
+import static com.example.bsafe.utils.Constants.WIGGLE;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback {
     

@@ -1,4 +1,4 @@
-package com.example.cda.utils;
+package com.example.bsafe.utils;
 
 public class Constants {
 
