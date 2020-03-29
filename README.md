@@ -21,14 +21,12 @@ git clone https://github.com/fragbaws/BSafe.git
 
 This project was developed and tested using Android Q and Gradle 5.4.1 on Windows 10.
 
-In order to run this project, please have Android Studio installed on your local system. It can be downloaded from the following link:
-```
-https://developer.android.com/studio
-```
+In order to run this project, please have Android Studio installed on your local system. It can be downloaded from [here.](https://developer.android.com/studio)
 
-The project can be built on an Android Emulator or on your Android mobile phone. If you will be using the Android Emulator, please ensure that you install an emulator with the version Android Q or earlier. The steps on how to do this can be found [here](https://developer.android.com/studio/run/managing-avds#createavd)
 
-If you will be running the application on your Android mobile phone, please ensure that the Android version on the mobile phone is Android Q or earlier. The steps on how to do this can be found [here](https://developer.android.com/studio/run/device)
+The project can be built on an Android Emulator or on your Android mobile phone. If you will be using the Android Emulator, please ensure that you install an emulator with the version Android Q or earlier. The steps on how to do this can be found [here.](https://developer.android.com/studio/run/managing-avds#createavd)
+
+If you will be running the application on your Android mobile phone, please ensure that the Android version on the mobile phone is Android Q or earlier. The steps on how to do this can be found [here.](https://developer.android.com/studio/run/device)
 
 During your setup process you may be asked to install the [OEM USB](https://developer.android.com/studio/run/oem-usb) and [Google USB](https://developer.android.com/studio/run/win-usb) drivers. Please do so if you wish to run the application on your Android mobile phone. 
 
