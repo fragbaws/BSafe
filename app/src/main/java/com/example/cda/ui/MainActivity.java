@@ -1,4 +1,4 @@
-package com.example.cda;
+package com.example.cda.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -18,6 +18,7 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.example.cda.R;
 import com.example.cda.ui.entry.LoginActivity;
 import com.example.cda.utils.User;
 import com.google.android.material.navigation.NavigationView;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //Setting up navigation drawer
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
         mAppBarConfiguration = new AppBarConfiguration.Builder(
@@ -57,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
         user = (User) getIntent().getExtras().getSerializable("user");
 
+        // Setting up biometric authentication for accessing user's profile
         executor = ContextCompat.getMainExecutor(this);
         biometricPrompt = new BiometricPrompt(MainActivity.this, executor, new BiometricPrompt.AuthenticationCallback() {
             @Override
@@ -94,19 +97,19 @@ public class MainActivity extends AppCompatActivity {
             if(R.id.nav_profile == id && !navigationView.getMenu().findItem(R.id.nav_profile).isChecked()) {
                 selectedItem = menuItem;
                 if (biometricAvailable) {
-                    biometricPrompt.authenticate(promptInfo);
+                    biometricPrompt.authenticate(promptInfo); // prompting user with biometric authentication when profile is being accessed
                     return biometricSucceeded;
                 }
             }
 
-            if(id == R.id.nav_home && !navigationView.getMenu().findItem(R.id.nav_home).isChecked()){
+            if(id == R.id.nav_home && !navigationView.getMenu().findItem(R.id.nav_home).isChecked()){ // ensuring home screen isn't fully reloaded when pressed again
                 NavigationUI.onNavDestinationSelected(menuItem, navController);
                 drawer.closeDrawer(GravityCompat.START);
                 return true;
             }
 
 
-            if(R.id.nav_sign_out == id){
+            if(R.id.nav_sign_out == id){ // Sending user back to Login screen when sign out is pressed
                 Intent intent = new Intent(this, LoginActivity.class);
                 startActivity(intent);
                 finish();
@@ -132,8 +135,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("Biometric", "Biometric features are currently unavailable.");
                 break;
             case BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED:
-                Log.e("Biometric", "The user hasn't associated " +
-                        "any biometric credentials with their account.");
+                Log.e("Biometric", "The user hasn't associated any biometric credentials with their account.");
                 break;
         }
     }

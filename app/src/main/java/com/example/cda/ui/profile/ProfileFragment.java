@@ -9,15 +9,12 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
 
-import com.example.cda.MainActivity;
+import com.example.cda.ui.MainActivity;
 import com.example.cda.R;
 import com.example.cda.utils.User;
 
 public class ProfileFragment extends Fragment {
-
-    private ProfileViewModel profileViewModel;
 
     private TextView nameTxt, mobileNumberTxt, emailTxt, emergencyContactTxt, weightTxt, heightTxt,
                     dobTxt, bloodTypeTxt, smokerTxt, bibulousTxt, medicalConditionTxt;
@@ -27,8 +24,7 @@ public class ProfileFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        profileViewModel =
-                ViewModelProviders.of(this).get(ProfileViewModel.class);
+
         View root = inflater.inflate(R.layout.fragment_profile, container, false);
         User user = ((MainActivity)this.getActivity()).getUser();
 
@@ -44,12 +40,13 @@ public class ProfileFragment extends Fragment {
         bibulousTxt = root.findViewById(R.id.profile_bibulous);
         medicalConditionTxt = root.findViewById(R.id.profile_medical_condition);
 
+        // Setup UI with details of signed-in user
         nameTxt.setText(user.getFirstName() + " " + user.getSurname());
         mobileNumberTxt.setText(user.getMobile());
         emailTxt.setText(user.getEmail());
         emergencyContactTxt.setText(user.getEmergency());
-        weightTxt.setText(user.getWeight() +" kg");
-        heightTxt.setText(user.getHeight() +" cm");
+        weightTxt.setText(user.getWeight() + " kg");
+        heightTxt.setText(user.getHeight() + " cm");
         dobTxt.setText(user.getDob());
         bloodTypeTxt.setText(user.getBloodType());
         smokerTxt.setText(user.getSmoker());
@@ -62,7 +59,7 @@ public class ProfileFragment extends Fragment {
         personalDetails = root.findViewById(R.id.profile_personal_details);
         medicalProfile = root.findViewById(R.id.profile_medical_profile);
 
-        personalDetailsBtn.setOnClickListener(v -> {
+        personalDetailsBtn.setOnClickListener(v -> { // switch to personal profile when clicked
                 personalDetails.setVisibility(View.VISIBLE);
                 medicalProfile.setVisibility(View.GONE);
 
@@ -70,7 +67,7 @@ public class ProfileFragment extends Fragment {
                 medicalProfileBtn.setTextColor(getResources().getColor(R.color.silver));
         });
 
-        medicalProfileBtn.setOnClickListener(v -> {
+        medicalProfileBtn.setOnClickListener(v -> { // switch to medical profile when clicked
             personalDetails.setVisibility(View.GONE);
             medicalProfile.setVisibility(View.VISIBLE);
 

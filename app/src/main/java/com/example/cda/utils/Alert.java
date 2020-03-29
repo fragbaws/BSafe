@@ -1,5 +1,6 @@
 package com.example.cda.utils;
 
+/** Used to easily send MSD into the database **/
 public class Alert {
 
     private String latitude;

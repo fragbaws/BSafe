@@ -14,6 +14,7 @@ import java.util.ArrayList;
 public class DBHelper extends SQLiteOpenHelper{
 
     private static final String DATABASE_NAME = "BSAFE";
+
     private static final String USERS_TABLE_NAME = "USERS";
     private static final String USERS_COLUMN_ID = "ID";
     private static final String USERS_COLUMN_FIRST_NAME = "FIRST_NAME";
@@ -37,13 +38,14 @@ public class DBHelper extends SQLiteOpenHelper{
     private static final String PREVIOUS_ALERTS_COLUMN_SPEED = "SPEED";
     private static final String PREVIOUS_ALERTS_COLUMN_GFORCE= "GFORCE";
 
-
-
-
     public DBHelper(Context context) {
         super(context, DATABASE_NAME , null, 1);
     }
 
+    /**
+     * Method used to create tables in the provided schema
+     * @param db - the schema that was created
+     */
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(
@@ -81,7 +83,11 @@ public class DBHelper extends SQLiteOpenHelper{
         onCreate(db);
     }
 
-    public boolean insertUser(User user){
+    /**
+     * Method used to add registered user to the database
+     * @param user - the newly registered user
+     */
+    public void insertUser(User user){
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -101,9 +107,13 @@ public class DBHelper extends SQLiteOpenHelper{
         cv.put(USERS_COLUMN_MEDICAL_CONDITION, user.getMedicalCondition());
         db.insert(USERS_TABLE_NAME, null, cv);
 
-        return true;
     }
 
+    /**
+     * Method used to retrieve all information about the user that logged in from the database
+     * @param email - the email corresponding to a user that logged in successfully
+     * @return User object corresponding to the user that logged in
+     */
     public User getUser(String email){
         User user = new User();
         user.setEmail(email);
@@ -127,11 +137,21 @@ public class DBHelper extends SQLiteOpenHelper{
         return user;
     }
 
+    /**
+     * Method used to check if the credentials exist in the database
+     * @param email - email of the user that tried to log in
+     * @param password - password of the user that tried to log in
+     * @return whether the provided credentials exist or not
+     */
     public boolean valid(String email, String password){
         Cursor c = getReadableDatabase().rawQuery("SELECT * FROM " + USERS_TABLE_NAME + " WHERE " + USERS_COLUMN_EMAIL + "=\""+email+"\" AND " + USERS_COLUMN_PASSWORD + "=\""+password+"\";", null);
         return c.moveToFirst();
     }
 
+    /**
+     * Method used to check if previous alerts exist in the database
+     * @return whether previous alerts exist in the database or not
+     */
     private boolean previousAlertsExist(){
         Cursor c = getReadableDatabase().rawQuery("SELECT * FROM " + PREVIOUS_ALERTS_TABLE_NAME + ";", null);
         boolean exist = (c.getCount() > 0);
@@ -139,7 +159,11 @@ public class DBHelper extends SQLiteOpenHelper{
         return exist;
     }
 
-    public boolean insertAlert(Alert alert){
+    /**
+     * Method used to register the alert in the database
+     * @param alert - the MSD that's been gathered from current crash
+     */
+    public void insertAlert(Alert alert){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
 
@@ -150,9 +174,12 @@ public class DBHelper extends SQLiteOpenHelper{
         cv.put(PREVIOUS_ALERTS_COLUMN_GFORCE, alert.getGforce());
 
         db.insert(PREVIOUS_ALERTS_TABLE_NAME, null, cv);
-        return true;
     }
 
+    /**
+     * Method used to retrieve all previous alerts from the database
+     * @return list of alerts
+     */
     public ArrayList<Alert> getPreviousAlerts(){
         if(!previousAlertsExist()){
             return null;

@@ -39,6 +39,7 @@ public class SignupActivity extends AppCompatActivity {
         passwordText = findViewById(R.id.input_password);
         continueBtn = findViewById(R.id.continue_button);
 
+        // Continue button is used to proceed the user to continue registering their medical profile
         continueBtn.setOnClickListener(v -> {
             if(!validate()){
                Toast.makeText(getApplicationContext(), "Check your details are filled correctly.", Toast.LENGTH_LONG).show();
@@ -59,10 +60,14 @@ public class SignupActivity extends AppCompatActivity {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             transaction.replace(R.id.signup, new SignUpMedicalFragment());
             transaction.addToBackStack(null);
-            transaction.commit();
+            transaction.commit(); // launch medical profile registration
         });
     }
 
+    /**
+     * Method used to ensure none of the fields are empty
+     * @return whether the fields are valid or not
+     */
     private boolean validate() {
         boolean valid = true;
 

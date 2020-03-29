@@ -6,6 +6,9 @@ import android.media.MediaRecorder;
 
 import java.util.List;
 
+/**
+ * Singleton class that contains formulas used to perform various required calculations
+ */
 public class Calculator {
 
     private static Calculator instance = null;
@@ -33,7 +36,6 @@ public class Calculator {
 
     public double calculateGForce(double x, double y, double z){
         return Math.sqrt(x*x + y*y + z*z)/(Constants.GRAVITY_CONSTANT);
-
     }
 
     public double calculateOrientation(float[] gravityValues, float[] magneticValues){

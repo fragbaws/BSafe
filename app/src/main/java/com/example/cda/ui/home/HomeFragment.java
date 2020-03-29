@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.Sensor;
@@ -37,7 +36,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
-import com.example.cda.MainActivity;
+import com.example.cda.ui.MainActivity;
 import com.example.cda.R;
 import com.example.cda.data.PrimaryData;
 import com.example.cda.data.SecondaryData;
@@ -75,17 +74,14 @@ import java.util.concurrent.TimeUnit;
 
 import static android.content.Context.SENSOR_SERVICE;
 import static android.os.Environment.getExternalStorageDirectory;
-import static com.example.cda.utils.Constants.AUTO_DISMISS_MILLIS;
 import static com.example.cda.utils.Constants.CLOSE_ZOOM;
-import static com.example.cda.utils.Constants.COUNT_DOWN_INTERVAL_MILLIS;
 import static com.example.cda.utils.Constants.G_FORCE_THRESHOLD;
 import static com.example.cda.utils.Constants.INTERNAL_DATA_BUFFER_SIZE;
-import static com.example.cda.utils.Constants.LOCATION_INTERVAL_SECS;
 import static com.example.cda.utils.Constants.MS2KMH;
 import static com.example.cda.utils.Constants.ROTATION_THRESHOLD;
 import static com.example.cda.utils.Constants.SECS2MS;
-import static com.example.cda.utils.Constants.VEHICLE_EMERGENCY_DECELERATION_THRESHOLD;
-import static com.example.cda.utils.Constants.VEHICLE_FIRST_GEAR_SPEED_THRESHOLD;
+import static com.example.cda.utils.Constants.EMERGENCY_DECELERATION_THRESHOLD;
+import static com.example.cda.utils.Constants.FIRST_GEAR_SPEED_THRESHOLD;
 import static com.example.cda.utils.Constants.WIGGLE;
 
 public class HomeFragment extends Fragment implements OnMapReadyCallback {
@@ -191,23 +187,24 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
 
                 if(!crash) {
-                    calculateRunningAverageThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
+                    calculateRunningAverageThreadHandler.postDelayed(this, TimeUnit.SECONDS.toMillis(1));
                 }
             }
         };
 
-        crashDetectionThread = new Runnable() {
+        crashDetectionThread = new Runnable() { // CDA running every second
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void run() {
                 Log.v(CDA, "Checking if crash occurred...");
                 boolean speedEvent = false, gForceEvent = false, rotationEvent = false;
 
+                // Speed Parameter
                 AccelerationTuple criticalDeceleration = null;
                 if (!primaryData.getBufferSpeed().isEmpty()) {
                     double currentSpeed = primaryData.getBufferSpeed().recent();
                     Log.v(CDA, "Analysing speed parameter");
-                    if (currentSpeed >= 0 && currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle is idle / moving slowly
+                    if (currentSpeed >= 0 && currentSpeed <= FIRST_GEAR_SPEED_THRESHOLD) { // vehicle is idle / moving slowly
                         Log.v(CDA, "Vehicle is moving slowly @ " + currentSpeed + " km/h");
                         OptionalDouble runningAverageOptional = primaryData.getBufferSpeed()
                                 .stream()
@@ -216,12 +213,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
                         if (runningAverageOptional.isPresent()) {
                             double runningAverage = runningAverageOptional.getAsDouble();
-                            if (runningAverage > VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
+                            if (runningAverage > FIRST_GEAR_SPEED_THRESHOLD) { // vehicle was previously moving
                                 Log.v(CDA, "Vehicle was previously moving @ ~" + runningAverage + " km/h");
 
                                 Optional<AccelerationTuple> decelerationOptional = secondaryData.getBufferAcceleration()
                                         .stream()
-                                        .filter(x -> x.getValue() <= VEHICLE_EMERGENCY_DECELERATION_THRESHOLD)
+                                        .filter(x -> x.getValue() <= EMERGENCY_DECELERATION_THRESHOLD)
                                         .findFirst();
                                 Log.v(CDA, "Speed: " + primaryData.getBufferSpeed());
                                 Log.v(CDA, "Acceleration: " + secondaryData.getBufferAcceleration());
@@ -229,8 +226,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                                 if (decelerationOptional.isPresent()) { // recent critical deceleration exists
                                     Log.v(CDA, "Vehicle experienced critical deceleration @ " + decelerationOptional.get().getValue() + " m/s^2");
                                     speedEvent = true;
-                                    criticalDeceleration = secondaryData.getBufferAcceleration().indexOf(decelerationOptional.get());
-                                    Log.v(CDA, "Critical deceleration occurred " + criticalDeceleration.getdT() + " seconds ago");
+                                    criticalDeceleration = secondaryData.getBufferAcceleration().retrieveObjectWithValue(decelerationOptional.get());
+                                    Log.v(CDA, "Critical deceleration occurred " + criticalDeceleration.getTime() + " seconds ago");
                                 } else {
                                     Log.v(CDA, "Vehicle did not experience critical deceleration");
                                 }
@@ -247,16 +244,17 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     Log.v(CDA, "Vehicle has not moved yet.");
                 }
 
-                if (criticalDeceleration != null) { // used to confirm the critical deceleration
+                // confirm critical deceleration with g-force, if it exists
+                if (speedEvent) {
                     Log.v(CDA, "Checking g-force during critical deceleration");
-                    if (criticalDeceleration.getdT() > INTERNAL_DATA_BUFFER_SIZE) {
-                        Log.v(CDA, "No information available about g-force " + criticalDeceleration.getdT() + " seconds ago");
+                    if (criticalDeceleration.getTime() > INTERNAL_DATA_BUFFER_SIZE) {
+                        Log.v(CDA, "No information available about g-force " + criticalDeceleration.getTime() + " seconds ago");
                     } else {
-                        Log.v(CDA, "Fetching g-force from " + criticalDeceleration.getdT() + " seconds ago");
+                        Log.v(CDA, "Fetching g-force from " + criticalDeceleration.getTime() + " seconds ago");
 
-                        double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(Math.round(criticalDeceleration.getdT()));
+                        double gForceDuringDeceleration = primaryData.getBufferGForce().closestMax(Math.round(criticalDeceleration.getTime()));
                         Log.v(CDA, "Vehicle experienced " + gForceDuringDeceleration + " G during critical deceleration ");
-                        if (gForceDuringDeceleration >= G_FORCE_THRESHOLD) {
+                        if (gForceDuringDeceleration >= G_FORCE_THRESHOLD) { // check if g-force was critical during critical deceleration
                             Log.v(CDA, "Deceleration confirmed by g-force");
                             gForceEvent = true;
                         } else {
@@ -265,12 +263,13 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     }
                 }
 
+                // Rotation Parameter
                 if(!primaryData.getBufferOrientation().isEmpty()){
                     Log.v(CDA, "Analysing orientation parameter");
                     double currentOrientation = primaryData.getBufferOrientation().recent();
                     double rotation = (fixedOrientation - currentOrientation);
                     Log.v(CDA, "Vehicle's wheels are raised by " + rotation + " degrees");
-                    if(rotation >= ROTATION_THRESHOLD || rotation <= -ROTATION_THRESHOLD){ // rotation clockwise/anti-clockwise
+                    if(rotation >= ROTATION_THRESHOLD || rotation <= -ROTATION_THRESHOLD){ // check if clockwise/anti-clockwise rotation was critical
                         Log.v(CDA, "Vehicle at risk overturning with wheels " + (rotation < 0 ? -rotation:rotation) + " deg. above ground");
                         rotationEvent = true;
                     }else{
@@ -278,11 +277,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     }
                 }
 
-                if(rotationEvent){ // used to confirm the critical rotation
+                // confirm critical rotation with g-force, if it exists
+                if(rotationEvent){
                     Log.v(CDA, "Checking g-force during critical rotation");
                     double gForceDuringRotation = primaryData.getBufferGForce().closestMax(0); // gforce && rotation buffers are synced
                     Log.v(CDA, "Vehicle experienced " + gForceDuringRotation + " G during critical rotation");
-                    if(gForceDuringRotation >= G_FORCE_THRESHOLD){
+                    if(gForceDuringRotation >= G_FORCE_THRESHOLD){ // check if g-force was critical during critical rotation
                         Log.v(CDA, "Rotation confirmed by g-force");
                         gForceEvent = true;
                     } else{
@@ -300,6 +300,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     crashEvent = "Collision";
                 }
 
+                // write current data to csv file for debugging
                 if (dataWriter != null) {
                     AccelerationTuple accelerationTuple = secondaryData.getBufferAcceleration().recent();
                     if (accelerationTuple == null) {
@@ -329,7 +330,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                             String.valueOf(gforce),
                             String.valueOf(speed),
                             String.valueOf(accelerationTuple.getValue()),
-                            String.valueOf(accelerationTuple.getdT()),
+                            String.valueOf(accelerationTuple.getTime()),
                             crashEvent,
                             String.valueOf(crash),
                             DateFormat.getDateTimeInstance().format(new Date()),
@@ -337,10 +338,11 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     });
                 }
 
+                // if crash occurred, the runnable needs to be stopped
                 if (crash) {
                     SOS();
                 }else {
-                    crashDetectionThreadHandler.postDelayed(this, (long) (LOCATION_INTERVAL_SECS * SECS2MS));
+                    crashDetectionThreadHandler.postDelayed(this, (long) TimeUnit.SECONDS.toMillis(1));
                 }
             }
         };
@@ -377,6 +379,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     }
                 }
 
+                // if crash occurred, the runnable needs to be stopped
                 if(!crash) {
                     deviceOrientationThreadHandler.postDelayed(this, TimeUnit.SECONDS.toMillis(5));
                 }
@@ -455,7 +458,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
                         float delayBetweenLocations = (float) ((newLocation.getTime() - oldLocation.getTime()) / SECS2MS);
 
-                        /** Temporary solution to acceleration being calculated incorrectly **/
+                        // Small fix to a glitch where the time between each location contains a decimal would result in an incorrect acceleration
+                        // Could not find reason for this glitch
                         if (delayBetweenLocations < 0) { // if negative
                             delayBetweenLocations = -delayBetweenLocations;
                         }
@@ -471,14 +475,14 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         Log.v(SPEED, "Current speed: " + currentSpeed + " km/h");
                         Log.v(SPEED, "Delay between locations: " + delayBetweenLocations + "s");
 
-                        if (currentSpeed <= VEHICLE_FIRST_GEAR_SPEED_THRESHOLD) {
-                            speedTxt.setText("<24 km/h");
+                        if (currentSpeed <= FIRST_GEAR_SPEED_THRESHOLD) {
+                            speedTxt.setText(R.string.LessThanTwentyFourKmh);
                         } else {
                             speedTxt.setText(String.format("%s km/h", Math.floor(currentSpeed)));
                         }
 
                         if (running) {
-                            primaryData.getBufferSpeed().add(currentSpeed); // calculate speed between locations
+                            primaryData.getBufferSpeed().add(currentSpeed);
                             if (primaryData.getBufferSpeed().size() >= 2) { // calculate acceleration between locations
                                 Log.v(SPEED, "Calculating acceleration between locations");
                                 double[] speedPair = primaryData.getBufferSpeed().getRecentPair();
@@ -506,6 +510,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                     case SmsManager.RESULT_ERROR_NO_SERVICE:
                     case SmsManager.RESULT_ERROR_NULL_PDU:
                     case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        // if could not send SMS, initiate runnable that will send it again in 30 seconds
                         if(!repeatSendMessageThreadHandler.hasCallbacks(repeatSendMessageThread)){
                             repeatSendMessageThreadHandler.postDelayed(repeatSendMessageThread, 0);
                         }
@@ -520,6 +525,8 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         Toast.makeText(getContext(), "Alert delivered to emergency contact", Toast.LENGTH_LONG).show();
+
+                        // SMS was delivered, remove all corresponding receivers and runnables
                         crash = false;
                         getActivity().unregisterReceiver(sentMessage);
                         getActivity().unregisterReceiver(deliveredMessage);
@@ -528,6 +535,7 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                         }
                         break;
                     case Activity.RESULT_CANCELED:
+                        // if could not deliver SMS, initiate runnable that will send it again in 30 seconds
                         if(!repeatSendMessageThreadHandler.hasCallbacks(repeatSendMessageThread)){
                             repeatSendMessageThreadHandler.postDelayed(repeatSendMessageThread, 0);
                         }
@@ -541,18 +549,22 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
                 if (monitorButton.getTag().equals("ready")) {
                     Log.v(HOME, "Activating crash detection algorithm...");
                     running = true;
-                    setupWriters();
+                    setupWriters(); // csv file for debugging
+
+                    //Setup sensors
                     manager = (SensorManager) getActivity().getSystemService(SENSOR_SERVICE);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_GAME);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_GAME);
                     manager.registerListener(sensorListener, manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
 
+                    //Setup runnables
                     calculateRunningAverageThreadHandler.postDelayed(calculateRunningAverageThread, 0);
                     deviceOrientationThreadHandler.postDelayed(deviceOrientationThread, 0);
-                    crashDetectionThreadHandler.postDelayed(crashDetectionThread, (long) (LOCATION_INTERVAL_SECS * SECS2MS)); // does not have access to the most up to date ROC values therefore delay is added
+                    crashDetectionThreadHandler.postDelayed(crashDetectionThread, TimeUnit.SECONDS.toMillis(1)); // does not have access to the most up to date ROC values therefore delay is added
 
-                    monitorButton.setText("Stop Monitoring");
-                    statusTxt.setText("Normal");
+                    //Alter UI
+                    monitorButton.setText(R.string.StopMonitoring);
+                    statusTxt.setText(R.string.Normal);
                     monitorButton.setTag("running");
                 } else {
                     stop();
@@ -566,13 +578,12 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
-        speedTxt.setOnClickListener(v -> {
-            if (newLocation != null) {
-                SOS();
-            }
-        });
     }
 
+    /**
+     * Method used for checking if the device's location services are enabled
+     * If disabled, the user will be prompted to open location settings and turn on location services
+     */
     private void isLocationServiceEnabled(){
         LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
         boolean gps_enabled = false;
@@ -609,6 +620,10 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    /**
+     * Ensures location services are enabled on launch of the fragment
+     * Once location services are enabled, request current location of the device
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -646,11 +661,15 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    /**
+     * Method used to return the fragment to its original state
+     * The runnables and sensors are stopped
+     */
     private void stop(){
         running = false;
-        monitorButton.setText("Start Monitoring");
+        monitorButton.setText(R.string.StartMonitoring);
         monitorButton.setTag("ready");
-        statusTxt.setText("Off");
+        statusTxt.setText(R.string.Off);
         if(calculateRunningAverageThreadHandler.hasCallbacks(calculateRunningAverageThread)){
             calculateRunningAverageThreadHandler.removeCallbacks(calculateRunningAverageThread);
         }
@@ -672,57 +691,68 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    /**
+     * Method used to put the fragment into the state for alerting emergency contact
+     * Launches an AlertDialogue that lets the user know a crash has been detected
+     */
     private void SOS(){
         stop();
         Log.v(HOME, "Crash detected");
         Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         MediaPlayer mp = MediaPlayer.create(getContext(), notification);
         mp.start();
-        statusTxt.setText("Crash");
+        statusTxt.setText(R.string.Crash);
 
-        AlertDialog dialog = new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.AlertStyle))
+        AlertDialog alert = new AlertDialog.Builder(new ContextThemeWrapper(getActivity(), R.style.AlertStyle))
                 .setTitle("Crash detected")
                 .setMessage("Your emergency contact will be alerted")
-                .setPositiveButton("SOS", (dialog1, which) -> sendAlert())
+                .setPositiveButton("SOS", (dialog1, which) -> {
+                    buildMSD();
+                    sendSMS();
+                })
                 .setNegativeButton("Cancel", null)
                 .create();
-        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(final DialogInterface dialog) {
-                final Button defaultButton = ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_NEGATIVE);
-                final CharSequence negativeButtonText = defaultButton.getText();
-                new CountDownTimer(AUTO_DISMISS_MILLIS, COUNT_DOWN_INTERVAL_MILLIS) {
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        defaultButton.setText(String.format(
-                                Locale.getDefault(), "%s (%d)",
-                                negativeButtonText,
-                                TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) + 1 //add one so it never displays zero
-                        ));
-                    }
-                    @Override
-                    public void onFinish() {
-                        if (((AlertDialog) dialog).isShowing()) {
-                            Log.v(HOME, "User did not respond to alert, sending message to emergency contact.");
-                            sendAlert();
-                            mp.stop();
-                            dialog.dismiss();
-                            if(primaryData != null){
-                                primaryData.clearBuffers();
-                            }
-                            if(secondaryData != null){
-                                secondaryData.clearBuffers();
-                            }
+        alert.setOnShowListener(dialog -> {
+            final Button defaultButton = ((AlertDialog) dialog).getButton(AlertDialog.BUTTON_NEGATIVE);
+            final CharSequence negativeButtonText = defaultButton.getText();
+            // Initiate a timer for the alert in the case that the alert is a false positive and can be cancelled
+            new CountDownTimer(TimeUnit.SECONDS.toMillis(10), TimeUnit.SECONDS.toMillis(1)) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    defaultButton.setText(String.format(
+                            Locale.getDefault(), "%s (%d)",
+                            negativeButtonText,
+                            TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) + 1 //add one so it never displays zero
+                    ));
+                }
+                // Once the timer counts to zero, alert the emergency contact
+                @Override
+                public void onFinish() {
+                    if (((AlertDialog) dialog).isShowing()) {
+                        Log.v(HOME, "User did not respond to alert, sending message to emergency contact.");
+                        buildMSD();
+                        sendSMS();
+                        mp.stop();
+                        dialog.dismiss();
+                        if(primaryData != null){
+                            primaryData.clearBuffers();
+                        }
+                        if(secondaryData != null){
+                            secondaryData.clearBuffers();
                         }
                     }
-                }.start();
-            }
+                }
+            }.start();
         });
-        dialog.show();
+        alert.show();
     }
 
-    private void sendAlert(){
-        User user = ((MainActivity)this.getActivity()).getUser();
+    /**
+     * Method used to build MSD consisting of ->
+     * Geo coordinates, timestamp, speed, g-force, personal profile, medical profile and type of crash
+     */
+    private void buildMSD() {
+        User user = ((MainActivity) this.getActivity()).getUser();
         phoneNo = user.getEmergency();
         String latitude = String.valueOf(newLocation.getLatitude());
         String longitude = String.valueOf(newLocation.getLongitude());
@@ -731,34 +761,33 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
         String gforce = String.valueOf(primaryData.getBufferGForce().recent());
 
         Log.v(HOME, "Building message for emergency contact: " + phoneNo);
-        message = "This is an automated message from BSafe to alert that " + user.getFirstName() +" " + user.getSurname() +
-                        " just experienced a vehicle crash. Please send an emergency response unit to (" + latitude +", " + longitude +") " +
-                        "now and pass them these details about " + user.getFirstName() +": " + "\n" +
-                        "Mobile number: " + user.getMobile() + "\n" +
-                        "Date of birth: " + user.getDob() + "\n" +
-                        "Height: " + user.getHeight() + " cm\n" +
-                        "Weight: " + user.getWeight() + " kg\n" +
-                        "Smoker: " + user.getSmoker() + "\n" +
-                        "Bibulous: " + user.getBibulous() + "\n" +
-                        "Medical condition: " + user.getMedicalCondition() + "\n" +
-                        "Blood type: " + user.getBloodType() + "\n" +
-                        "Last speed: " + speed + " km/h \n" +
-                        "G-Force experienced: " + gforce + "\n" +
-                        "Time of crash: " + timestamp + "\n" +
-                        "Type of crash: " + crashEvent + "\n" +
+        message = "This is an automated message from BSafe to alert that " + user.getFirstName() + " " + user.getSurname() +
+                " just experienced a vehicle crash. Please send an emergency response unit to (" + latitude + ", " + longitude + ") " +
+                "now and pass them these details about " + user.getFirstName() + ": " + "\n" +
+                "Mobile number: " + user.getMobile() + "\n" +
+                "Date of birth: " + user.getDob() + "\n" +
+                "Height: " + user.getHeight() + " cm\n" +
+                "Weight: " + user.getWeight() + " kg\n" +
+                "Smoker: " + user.getSmoker() + "\n" +
+                "Bibulous: " + user.getBibulous() + "\n" +
+                "Medical condition: " + user.getMedicalCondition() + "\n" +
+                "Blood type: " + user.getBloodType() + "\n" +
+                "Last speed: " + speed + " km/h \n" +
+                "G-Force experienced: " + gforce + "\n" +
+                "Time of crash: " + timestamp + "\n" +
+                "Type of crash: " + crashEvent + "\n" +
                 "You received this message because " + user.getFirstName() + " has listed you as an emergency contact in BSafe.";
 
         Log.v(HOME, "Sending message to " + phoneNo);
-
-
-        getActivity().registerReceiver(sentMessage, new IntentFilter("SMS_SENT"));
-        getActivity().registerReceiver(deliveredMessage, new IntentFilter("SMS_DELIVERED"));
-        sendSMS();
         LoginActivity.sql.insertAlert(new Alert(latitude, longitude, timestamp, speed, gforce)); // sending alert to database
-
     }
 
+    /**
+     * Method used to register Broadcast Receivers and send SMS with MSD to emergency contact
+     */
     private void sendSMS(){
+        getActivity().registerReceiver(sentMessage, new IntentFilter("SMS_SENT"));
+        getActivity().registerReceiver(deliveredMessage, new IntentFilter("SMS_DELIVERED"));
         SmsManager smsManager = SmsManager.getDefault();
         ArrayList<String> parts = smsManager.divideMessage(message);
 
@@ -774,27 +803,35 @@ public class HomeFragment extends Fragment implements OnMapReadyCallback {
 
         smsManager.sendMultipartTextMessage(phoneNo, null, parts, sentPendingIntents, deliveredPendingIntents); // sending alert to emergency contact
     }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         if (googleMap != null) {
             this.googleMap = googleMap;
             this.googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(getActivity(), R.raw.style_json));
+            this.googleMap.getUiSettings().setMyLocationButtonEnabled(false);
+            this.googleMap.setIndoorEnabled(false);
+            this.googleMap.setTrafficEnabled(true);
+            this.googleMap.setBuildingsEnabled(false);
             Log.v(HOME, "Initiating location request..");
             requestLocation();
         }
     }
 
+    /**
+     * Method used to request user's location using Google's FusedLocationProviderClient
+     */
     private void requestLocation() {
         LocationRequest locationRequest = new LocationRequest();
-        locationRequest.setInterval((long) (LOCATION_INTERVAL_SECS*SECS2MS));
+        locationRequest.setInterval(TimeUnit.SECONDS.toMillis(1));
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null);
-        googleMap.getUiSettings().setMyLocationButtonEnabled(false);
-        googleMap.setIndoorEnabled(false);
-        googleMap.setTrafficEnabled(true);
-        googleMap.setBuildingsEnabled(false);
     }
 
+    /**
+     * Method used to set up a CSVWriter for debugging purposes
+     * Can be accessed in internal storage under the file name "crash_data.csv"
+     */
     private void setupWriters(){
         String baseDir = getExternalStorageDirectory().getAbsolutePath();
         String fileName = "crash_data.csv";

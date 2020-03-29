@@ -21,9 +21,9 @@ import com.example.cda.R;
 import com.example.cda.utils.User;
 import com.jaredrummler.materialspinner.MaterialSpinner;
 
-public class SignUpMedicalFragment extends Fragment {
+import java.util.concurrent.TimeUnit;
 
-    private SignUpMedicalViewModel mViewModel;
+public class SignUpMedicalFragment extends Fragment {
 
     private static User newUser;
     private EditText weightText;
@@ -33,10 +33,6 @@ public class SignUpMedicalFragment extends Fragment {
     private MaterialSpinner bibulous;
     private MaterialSpinner condition;
     private Button signupBtn;
-
-    public static SignUpMedicalFragment newInstance() {
-        return new SignUpMedicalFragment();
-    }
 
     static void setNewUser(User u){
         newUser = u;
@@ -82,24 +78,22 @@ public class SignUpMedicalFragment extends Fragment {
 
             new android.os.Handler().postDelayed(
                     () -> {
-                        LoginActivity.sql.insertUser(newUser);
+                        LoginActivity.sql.insertUser(newUser); // sending registered user to the database
                         Toast.makeText(getContext(), "Registration complete, please login.", Toast.LENGTH_LONG).show();
                         getActivity().setResult(Activity.RESULT_OK);
-                        getActivity().finish();
+                        getActivity().finish(); // send user back to login screen to complete their registration
                         progressDialog.dismiss();
-                    }, 1000);
+                    }, TimeUnit.SECONDS.toMillis(1));
         });
 
         return root;
     }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mViewModel = ViewModelProviders.of(this).get(SignUpMedicalViewModel.class);
-        // TODO: Use the ViewModel
-    }
 
+    /**
+     * Method used to check if information entered into fields is valid or not
+     * @return whether the information entered is valid or not
+     */
     private boolean validate() {
         boolean valid = true;
 

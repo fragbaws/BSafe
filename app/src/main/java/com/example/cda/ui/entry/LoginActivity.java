@@ -17,7 +17,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import com.example.cda.MainActivity;
+import com.example.cda.ui.MainActivity;
 import com.example.cda.R;
 import com.example.cda.db.DBHelper;
 import com.example.cda.utils.User;
@@ -25,6 +25,7 @@ import com.example.cda.utils.User;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class LoginActivity extends AppCompatActivity{
 
@@ -49,7 +50,7 @@ public class LoginActivity extends AppCompatActivity{
         getSupportActionBar().hide();
         setContentView(R.layout.activity_login);
 
-        if(checkAndRequestPermissions()){
+        if(checkAndRequestPermissions()){ // allow user to continue only if the permissions have been accepted
             init();
         }
 
@@ -70,6 +71,12 @@ public class LoginActivity extends AppCompatActivity{
         });
     }
 
+    /**
+     * Method called once the user presses "Login" button
+     * Used to validate the entered credentials with SQLite database
+     * If credentials are valid, user is sent to main screen
+     * If credentials are invalid, user has to try again or signup
+     */
     private void login() {
 
         if (!validate()) {
@@ -96,9 +103,13 @@ public class LoginActivity extends AppCompatActivity{
                     }
 
                     progressDialog.dismiss();
-                }, 3000);
+                }, TimeUnit.SECONDS.toMillis(3));
     }
 
+    /**
+     * Method used to validate the user's input to credential fields. It is to ensure they're not empty
+     * @return whether the input is valid or not
+     */
     private boolean validate() {
         boolean valid = true;
 
@@ -118,6 +129,9 @@ public class LoginActivity extends AppCompatActivity{
         return valid;
     }
 
+    /**
+     * Method used to launch main screen if the login was successful
+     */
     private void onLoginSuccess() {
         Bundle b = new Bundle();
         User user = sql.getUser(emailText.getText().toString());
@@ -128,6 +142,9 @@ public class LoginActivity extends AppCompatActivity{
         finish();
     }
 
+    /**
+     * Method used to notify if their credentials were incorrect upon login
+     */
     private void onLoginFailed(){
         Toast.makeText(getApplicationContext(), "Login failed", Toast.LENGTH_SHORT).show();
         loginBtn.setEnabled(true);
@@ -143,6 +160,12 @@ public class LoginActivity extends AppCompatActivity{
         }
     }
 
+    /** Method used to check and request all required permissions for using the app:
+     * -> Write to external storage
+     * -> Send SMS
+     * -> Access to location
+     * @return whether the permissions have been accepted or not
+     */
     private boolean checkAndRequestPermissions() {
         ArrayList<String> permissionsRequired = new ArrayList<>();
         for (String permission : PERMISSIONS) {

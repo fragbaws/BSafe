@@ -1,29 +1,27 @@
 package com.example.cda.utils;
 
-/** Used with rate of change values that are not calculated over a consistent fixed period
- * i.e. acceleration
- */
+/** Used to keep track of the delay between each location for more accurate acceleration calculation**/
 public class AccelerationTuple {
 
     private double value;
-    private float dT;
+    private float time;
 
-    public AccelerationTuple(double val, float dt){
+    public AccelerationTuple(double val, float time){
         this.value = val;
-        this.dT = dt;
+        this.time = time;
     }
 
     public double getValue() {
         return value;
     }
 
-    public float getdT() {
-        return dT;
+    public float getTime() {
+        return time;
     }
 
     @Override
     public String toString(){
-        return "("+this.value +" m/s^2, "+ this.dT +" s)";
+        return "("+this.value +" m/s^2, "+ this.time +" s)";
     }
 
 

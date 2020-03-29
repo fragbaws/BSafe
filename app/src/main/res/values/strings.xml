@@ -18,6 +18,12 @@
 
 
     <string name="about_me">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur</string>
+    <string name="LessThanTwentyFourKmh"><![CDATA[<24 km/h]]></string>
+    <string name="StartMonitoring">Start Monitoring</string>
+    <string name="Off">Off</string>
+    <string name="Crash">Crash</string>
+    <string name="Normal">Normal</string>
+    <string name="StopMonitoring">Stop Monitoring</string>
 
 
 </resources>

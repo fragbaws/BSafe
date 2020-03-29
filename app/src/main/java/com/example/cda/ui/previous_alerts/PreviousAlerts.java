@@ -20,15 +20,9 @@ import java.util.ArrayList;
 
 public class PreviousAlerts extends Fragment {
 
-    private PreviousAlertsViewModel mViewModel;
-
     private LinearLayout parentLayout;
     private View root;
     private LayoutInflater inflater;
-
-    public static PreviousAlerts newInstance() {
-        return new PreviousAlerts();
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -43,9 +37,10 @@ public class PreviousAlerts extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mViewModel = ViewModelProviders.of(this).get(PreviousAlertsViewModel.class);
         ArrayList<Alert> alerts = LoginActivity.sql.getPreviousAlerts();
         if(alerts != null) {
+
+            // used to visualise all alerts that exist in the database
             for(Alert a: alerts) {
                 View view = inflater.inflate(R.layout.previous_alerts_entry, parentLayout, false);
 

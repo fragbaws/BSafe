@@ -2,6 +2,9 @@ package com.example.cda.utils;
 
 import java.io.Serializable;
 
+/**
+ * Used to store information about a specific user that registered or logged in.
+ */
 public class User implements Serializable {
 
     public User(){}
