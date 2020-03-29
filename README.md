@@ -2,7 +2,7 @@
 
 eCall is a European initiative intended to bring rapid assistance to motorists involved in a collision anywhere in the European Union. It has been available in new cars since 2018. The initiative aims to reduce the number of fatal accidents post-collision and reduce the total annual cost associated with road accidents. Pre-2018 vehicles do not have access to eCall. This project was developed to combat this issue. BSafe is an android application responsible for real time road crash detection, aiding the victim in securing automated assistance. 
 
-This is a final year project as part of the University College Dublin, BSc. Computer Science course. 
+This is a final year project as part of the University College Dublin, BSc. Computer Science course. The supervisor for this project is Dr. Andrew Hines.
 
 **P.S This application was not industrially tested therefore it should not be relied upon during personal use. This is a prototype only and the author is not responsible for any problems that may occur. Please follow standard procedures and stay safe.**
 
